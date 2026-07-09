@@ -102,7 +102,7 @@ function getSiteUrl() {
     return window.location.origin
   }
 
-  return 'https://budgetplanner.com'
+  return 'https://budget-planner-seven-cyan.vercel.app'
 }
 
 function RouteSeo() {
@@ -110,7 +110,7 @@ function RouteSeo() {
   const meta = routeMeta[pathname] ?? defaultMeta
   const siteUrl = getSiteUrl()
   const canonicalUrl = `${siteUrl}${pathname === '/' ? '' : pathname}`
-  const imageUrl = `${siteUrl}/report.png`
+  const imageUrl = `${siteUrl}/website.png`
 
   return (
     <Helmet prioritizeSeoTags>
@@ -126,11 +126,13 @@ function RouteSeo() {
       <meta property="og:description" content={meta.description} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:image" content={imageUrl} />
+      <meta property="og:image:alt" content="Budget Planner dashboard preview" />
 
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={meta.title} />
       <meta name="twitter:description" content={meta.description} />
       <meta name="twitter:image" content={imageUrl} />
+      <meta name="twitter:image:alt" content="Budget Planner dashboard preview" />
     </Helmet>
   )
 }

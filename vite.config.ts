@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import Sitemap from 'vite-plugin-sitemap'
 
-const siteUrl = process.env.VITE_SITE_URL || 'https://budgetplanner.com'
+const siteUrl = process.env.VITE_SITE_URL || 'https://budget-planner-seven-cyan.vercel.app'
 const appRoutes = [
   '/login',
   '/register',
