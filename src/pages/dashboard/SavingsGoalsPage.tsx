@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -95,9 +95,9 @@ function SavingsGoalsPage() {
   })
   const {
     register,
+    control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<SavingsGoalFormValues>({
     resolver: zodResolver(savingsGoalSchema),
@@ -109,8 +109,8 @@ function SavingsGoalsPage() {
     },
   })
 
-  const watchedTarget = watch('target_amount')
-  const watchedCurrent = watch('current_amount')
+  const watchedTarget = useWatch({ control, name: 'target_amount' })
+  const watchedCurrent = useWatch({ control, name: 'current_amount' })
 
   const liveProgress = useMemo(() => {
     if (watchedTarget > 0) {
@@ -150,14 +150,28 @@ function SavingsGoalsPage() {
   }
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       
 
       {/* Summary cards */}
       {isLoading ? (
         <SummarySkeleton />
       ) : savingsGoals.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <>
+          <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 md:hidden">
+            {[
+              { label: t('page.savings.total_saved'), value: formatCurrency(totalSaved), tone: 'text-[var(--color-purple)]' },
+              { label: t('page.savings.active_goals'), value: String(savingsGoals.length), tone: 'text-[var(--color-primary)]' },
+              { label: t('page.savings.completed'), value: String(completedGoals), tone: 'text-[var(--color-success)]' },
+            ].map((item, index, list) => (
+              <div key={item.label} className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{item.label}</p>
+                <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-3">
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
             <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.savings.total_saved')}</p>
@@ -190,10 +204,11 @@ function SavingsGoalsPage() {
               {completedGoals}
             </p>
           </div>
-        </div>
+          </div>
+        </>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
         {/* ───── Form ───── */}
         <PageSection title={t('page.savings.form_title')} subtitle={t('page.savings.form_subtitle')}>
           {isLoading ? (
@@ -317,7 +332,7 @@ function SavingsGoalsPage() {
         {/* ───── Goals List ───── */}
         <PageSection title={t('page.savings.list_title')} subtitle={t('page.savings.list_subtitle')}>
           {isLoading ? (
-            <div className="mt-5 grid gap-4 xl:grid-cols-2">
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
               {[1, 2, 3, 4].map((i) => (
                 <GoalSkeleton key={i} />
               ))}
@@ -333,18 +348,18 @@ function SavingsGoalsPage() {
           ) : (
             <>
               {/* Summary bar */}
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+              <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                   {savingsGoals.length} {savingsGoals.length === 1 ? t('page.savings.goal_singular') : t('page.savings.goal_plural')}
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineCurrencyDollar className="text-sm text-[var(--color-purple)]" />
                   <span className="text-[var(--color-purple)]">{formatCurrency(totalSaved)} {t('common.saved')}</span>
                 </span>
                 {completedGoals > 0 && (
                   <>
-                    <span className="h-3 w-px bg-[var(--color-border)]" />
+                    <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                     <span className="flex items-center gap-1.5 text-sm font-semibold">
                       <HiOutlineTrophy className="text-sm text-[var(--color-success)]" />
                       <span className="text-[var(--color-success)]">{completedGoals} {t('common.completed')}</span>
@@ -354,7 +369,7 @@ function SavingsGoalsPage() {
               </div>
 
               {/* Goals grid */}
-              <div className="grid gap-4 xl:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                 {savingsGoals.map((goal, index) => {
                   const target = Number(goal.target_amount)
                   const current = Number(goal.current_amount)
@@ -366,7 +381,7 @@ function SavingsGoalsPage() {
                   return (
                     <div
                       key={goal.id}
-                      className={`group relative overflow-hidden rounded-[24px] border p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] ${
+                      className={`group relative overflow-hidden rounded-[26px] border p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] sm:p-5 ${
                         isCompleted
                           ? 'border-[var(--color-success)]/50 bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-success-soft)]'
                           : 'border-[var(--color-border)]/70 bg-[var(--color-surface)] hover:border-[var(--color-border-strong)]/70'
@@ -389,7 +404,7 @@ function SavingsGoalsPage() {
                         </div>
                       )}
 
-                      <div className="relative flex items-start justify-between gap-4">
+                      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         {/* Left */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-3">
@@ -400,7 +415,7 @@ function SavingsGoalsPage() {
                               <HiOutlineFlag className="text-lg" style={{ color: goalColor }} />
                             </div>
                             <div className="min-w-0">
-                              <p className="truncate text-lg font-bold text-[var(--color-text)]">
+                              <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
                                 {goal.title}
                               </p>
                               <p className="text-sm text-[var(--color-text-muted)]">
@@ -450,7 +465,7 @@ function SavingsGoalsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex shrink-0 gap-1.5">
+                        <div className="flex shrink-0 justify-end gap-1.5 xl:flex-col">
                           <button
                             type="button"
                             disabled={isUpdating}

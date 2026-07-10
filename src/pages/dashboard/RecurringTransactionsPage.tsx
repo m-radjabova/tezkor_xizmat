@@ -167,14 +167,28 @@ function RecurringTransactionsPage() {
   }
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       
 
       {/* Summary cards */}
       {isLoading ? (
         <SummarySkeleton />
       ) : recurringTransactions.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <>
+          <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 md:hidden">
+            {[
+              { label: t('page.recurring.total_recurring'), value: String(recurringTransactions.length), tone: 'text-[var(--color-primary)]' },
+              { label: t('common.active'), value: `${activeCount} / ${recurringTransactions.length}`, tone: 'text-[var(--color-success)]' },
+              { label: t('page.recurring.monthly_total'), value: formatCurrency(totalMonthly), tone: 'text-[var(--color-purple)]' },
+            ].map((item, index, list) => (
+              <div key={item.label} className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{item.label}</p>
+                <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden gap-4 md:grid md:grid-cols-3">
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
             <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.recurring.total_recurring')}</p>
@@ -198,10 +212,11 @@ function RecurringTransactionsPage() {
               {formatCurrency(totalMonthly)}
             </p>
           </div>
-        </div>
+          </div>
+        </>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
         {/* ───── Form ───── */}
         <PageSection title={t('page.recurring.form_title')} subtitle={t('page.recurring.form_subtitle')}>
           {isLoading ? (
@@ -403,16 +418,16 @@ function RecurringTransactionsPage() {
           ) : (
             <>
               {/* Summary bar */}
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+              <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                   {recurringTransactions.length} {recurringTransactions.length === 1 ? t('common.item') : t('common.items')}
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineCheckCircle className="text-sm text-[var(--color-success)]" />
                   <span className="text-[var(--color-success)]">{activeCount} {t('common.active_lc')}</span>
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineBanknotes className="text-sm text-[var(--color-purple)]" />
                   <span className="text-[var(--color-purple)]">{formatCurrency(totalMonthly)} / {t('common.month_lc')}</span>
@@ -420,7 +435,7 @@ function RecurringTransactionsPage() {
               </div>
 
               {/* Recurring list */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {recurringTransactions.map((item, index) => {
                   const isExpense = item.type === 'expense'
                   const accentColor = isExpense ? 'var(--color-danger)' : 'var(--color-success)'
@@ -429,7 +444,7 @@ function RecurringTransactionsPage() {
                   return (
                     <div
                       key={item.id}
-                      className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70"
+                      className="group relative overflow-hidden rounded-[26px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70 sm:p-5"
                       style={{ animationDelay: `${index * 60}ms` }}
                     >
                       {/* Gradient accent */}
@@ -443,8 +458,8 @@ function RecurringTransactionsPage() {
                       <div className="relative flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                         {/* Left content */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-3">
-                            <p className="truncate text-lg font-bold text-[var(--color-text)]">{item.title}</p>
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                            <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">{item.title}</p>
                             <span
                               className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] ${
                                 item.is_active
@@ -502,12 +517,12 @@ function RecurringTransactionsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex shrink-0 items-center gap-2">
+                        <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
                           <button
                             type="button"
                             disabled={isUpdating}
                             onClick={() => updateRecurringTransaction({ id: item.id, payload: { is_active: !item.is_active } })}
-                            className={`flex items-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
+                            className={`flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto ${
                               item.is_active
                                 ? 'border-[var(--color-border)]/70 bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:border-[var(--color-danger)] hover:bg-[var(--color-danger-soft)] hover:text-[var(--color-danger)]'
                                 : 'border-[var(--color-success)]/30 bg-[var(--color-success-soft)] text-[var(--color-success)] hover:bg-[var(--color-success)] hover:text-white'

@@ -88,9 +88,9 @@ function CategoriesPage() {
   }
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
         {/* ───── Form ───── */}
         <PageSection title={t('page.categories.form_title')} subtitle={t('page.categories.form_subtitle')}>
           {isLoading ? (
@@ -254,11 +254,11 @@ function CategoriesPage() {
           ) : (
             <>
               {/* Summary bar */}
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+              <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                   {categories.length} {categories.length === 1 ? t('page.categories.category_singular') : t('page.categories.category_plural')}
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <span className="inline-block h-2.5 w-2.5 rounded-full bg-[var(--color-danger)]" />
                   <span className="text-[var(--color-danger)]">
@@ -336,7 +336,7 @@ function CategoriesPage() {
                       </div>
 
                       {/* Actions */}
-                      <div className="flex shrink-0 gap-1.5">
+                      <div className="flex shrink-0 justify-end gap-1.5">
                         <button
                           type="button"
                           disabled={isUpdating}

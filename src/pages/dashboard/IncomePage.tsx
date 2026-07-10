@@ -80,40 +80,43 @@ function IncomePage() {
   )
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
-      
-
-      {/* Summary cards */}
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       {isLoading ? (
         <SummarySkeleton />
       ) : (
-        <div className="grid gap-4 md:grid-cols-3">
-          <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">Total income</p>
-            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">
-              {formatCurrency(totalIncome)}
-            </p>
+        <>
+          <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 sm:hidden">
+            {[
+              { label: t('page.income.total_income'), value: formatCurrency(totalIncome), tone: 'text-[var(--color-success)]' },
+              { label: t('page.income.income_transactions'), value: String(incomes.length), tone: 'text-[var(--color-text)]' },
+              { label: t('page.income.average_income'), value: incomes.length > 0 ? formatCurrency(averageIncome) : formatCurrency(0), tone: 'text-[var(--color-purple)]' },
+            ].map((item, index, list) => (
+              <div key={item.label} className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{item.label}</p>
+                <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+              </div>
+            ))}
           </div>
-
-          <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">
-              Income transactions
-            </p>
-            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-text)]">
-              {incomes.length}
-            </p>
+          <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-3">
+            <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.income.total_income')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">
+                {formatCurrency(totalIncome)}
+              </p>
+            </div>
+            <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.income.income_transactions')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-text)]">{incomes.length}</p>
+            </div>
+            <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.income.average_income')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-purple)]">{incomes.length > 0 ? formatCurrency(averageIncome) : formatCurrency(0)}</p>
+            </div>
           </div>
-
-          <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">Average income</p>
-            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-purple)]">
-              {incomes.length > 0 ? formatCurrency(averageIncome) : formatCurrency(0)}
-            </p>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Income list */}
@@ -135,18 +138,18 @@ function IncomePage() {
         ) : (
           <>
             {/* Summary bar */}
-            <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+            <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
               <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                 {incomes.length} {incomes.length === 1 ? t('page.income.record_singular') : t('page.income.record_plural')}
               </span>
-              <span className="h-3 w-px bg-[var(--color-border)]" />
+              <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
               <span className="flex items-center gap-1.5 text-sm font-semibold">
                 <HiOutlineBanknotes className="text-sm text-[var(--color-success)]" />
                 <span className="text-[var(--color-success)]">{formatCurrency(totalIncome)} {t('common.total')}</span>
               </span>
               {incomes.length > 1 && (
                 <>
-                  <span className="h-3 w-px bg-[var(--color-border)]" />
+                  <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                   <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-muted)]">
                     {t('common.average_short')} {formatCurrency(averageIncome)}
                   </span>
@@ -155,14 +158,14 @@ function IncomePage() {
             </div>
 
             {/* List */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {incomes.map((income, index) => {
                 const categoryColor = categoryColorMap.get(income.category_id ?? '') ?? '#5d8f75'
                 const categoryName = categoryNameMap.get(income.category_id ?? '')
                 return (
                   <div
                     key={income.id}
-                    className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70"
+                    className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70 sm:p-5"
                     style={{ animationDelay: `${index * 60}ms` }}
                   >
                     {/* Gradient accent */}
@@ -186,7 +189,7 @@ function IncomePage() {
                               style={{ backgroundColor: categoryColor }}
                             />
                           </span>
-                          <p className="truncate text-lg font-bold text-[var(--color-text)]">
+                          <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
                             {income.title}
                           </p>
                         </div>
@@ -229,8 +232,8 @@ function IncomePage() {
                       </div>
 
                       {/* Amount */}
-                      <div className="flex shrink-0 items-center gap-3">
-                        <p className="text-2xl font-extrabold text-[var(--color-success)]">
+                      <div className="flex shrink-0 items-center justify-end gap-3">
+                        <p className="text-xl font-extrabold text-[var(--color-success)] sm:text-2xl">
                           +{formatCurrency(income.amount)}
                         </p>
                       </div>

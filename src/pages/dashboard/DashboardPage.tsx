@@ -5,18 +5,24 @@ import {
   HiOutlineArrowTrendingUp,
   HiOutlineBellAlert,
   HiOutlineBanknotes,
+  HiOutlineBars3,
   HiOutlineChartBarSquare,
-  HiOutlineWallet,
+  HiOutlineClipboardDocumentList,
+  HiOutlineChevronRight,
   HiOutlineSparkles,
+  HiOutlineWallet,
   HiOutlineFire,
   HiOutlineShieldCheck,
+  HiOutlineReceiptPercent,
 } from 'react-icons/hi2'
+import { Link } from 'react-router-dom'
 import EmptyState from '../../components/EmptyState'
 import StatCard from '../../components/StatCard'
 import { useBudgets } from '../../hooks/useBudgets'
 import { useCategories } from '../../hooks/useCategories'
 import { useDebts } from '../../hooks/useDebts'
 import { useNotes } from '../../hooks/useNotes'
+import { useAuth } from '../../hooks/useAuth'
 import { useSavingsGoals } from '../../hooks/useSavingsGoals'
 import { useTransactions } from '../../hooks/useTransactions'
 import { usePreferences } from '../../hooks/usePreferences'
@@ -92,6 +98,115 @@ function GradientBadge({ label, gradient }: { label: string; gradient: string })
     >
       {label}
     </span>
+  )
+}
+
+function getLocale(language: 'en' | 'ru') {
+  return language === 'ru' ? 'ru-RU' : 'en-US'
+}
+
+function HomeHero({
+  greeting,
+  dateLabel,
+  balance,
+  notesCount,
+  alertsCount,
+  balanceLabel,
+  t,
+}: {
+  greeting: string
+  dateLabel: string
+  balance: string
+  notesCount: number
+  alertsCount: number
+  balanceLabel: string
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  return (
+    <div className="mobile-surface-card overflow-hidden rounded-[30px] p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[var(--color-text)]">
+            {greeting}
+          </p>
+          <div className="mt-1 inline-flex items-center gap-2 text-xs font-medium text-[var(--color-text-muted)]">
+            <span>{dateLabel}</span>
+            <span className="h-1 w-1 rounded-full bg-[var(--color-border-strong)]" />
+            <span>{t('page.dashboard.notes_count', { count: notesCount })}</span>
+          </div>
+        </div>
+
+        <Link
+          to="/notifications"
+          aria-label={t('page.dashboard.open_notifications')}
+          className="tap-highlight mobile-icon-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-primary-pale)] text-[var(--color-primary)]"
+        >
+          <HiOutlineBellAlert className="text-lg" />
+        </Link>
+      </div>
+
+      <div className="mt-4 rounded-[24px] bg-[linear-gradient(135deg,#5b58f6_0%,#7b83ff_100%)] px-4 py-4 text-white shadow-[0_18px_34px_rgba(87,83,246,0.26)]">
+        <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/75">
+          {balanceLabel}
+        </p>
+        <p className="mt-2 text-[1.9rem] font-extrabold tracking-[-0.05em]">{balance}</p>
+        <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-white/80">
+          <HiOutlineSparkles className="text-sm" />
+          <span>{t('page.dashboard.active_alerts', { count: alertsCount })}</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function QuickAction({
+  to,
+  label,
+  icon: Icon,
+  tone,
+}: {
+  to: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+  tone: string
+}) {
+  return (
+    <Link
+      to={to}
+      className="group flex min-h-[92px] flex-col justify-between rounded-[26px] border border-[var(--color-border)] bg-[var(--color-surface-strong)] p-4 shadow-[var(--shadow-soft)] transition-all duration-200 active:scale-[0.98]"
+    >
+      <span className={`flex h-11 w-11 items-center justify-center rounded-2xl ${tone}`}>
+        <Icon className="text-xl" />
+      </span>
+      <span className="mt-4 text-sm font-bold leading-5 text-[var(--color-text)]">{label}</span>
+    </Link>
+  )
+}
+
+function MobileSectionHeading({
+  title,
+  to,
+  t,
+}: {
+  title: string
+  to?: string
+  t: (key: string, params?: Record<string, string | number>) => string
+}) {
+  return (
+    <div className="mb-3 flex items-center justify-between px-1">
+      <h3 className="text-[15px] font-extrabold tracking-tight text-[var(--color-text)]">
+        {title}
+      </h3>
+      {to ? (
+        <Link
+          to={to}
+          className="inline-flex items-center gap-1 text-xs font-bold text-[var(--color-primary)]"
+        >
+          {t('common.view_all')}
+          <HiOutlineChevronRight className="text-sm" />
+        </Link>
+      ) : null}
+    </div>
   )
 }
 
@@ -215,13 +330,14 @@ function NoteCardSkeleton() {
 }
 
 function DashboardPage() {
+  const { user } = useAuth()
   const { categories, isLoading: isCategoriesLoading } = useCategories()
   const { transactions, isLoading: isTransactionsLoading } = useTransactions()
   const { budgets, isLoading: isBudgetsLoading } = useBudgets()
   const { savingsGoals, isLoading: isSavingsLoading } = useSavingsGoals()
   const { debts, isLoading: isDebtsLoading } = useDebts()
   const { notes, isLoading: isNotesLoading } = useNotes()
-  const { dateFilter, transactionSearch, t } = usePreferences()
+  const { dateFilter, transactionSearch, t, language } = usePreferences()
 
   const isLoading = isCategoriesLoading || isTransactionsLoading || isBudgetsLoading || isSavingsLoading || isDebtsLoading || isNotesLoading
 
@@ -331,6 +447,30 @@ function DashboardPage() {
         })),
     [budgetCards],
   )
+
+  const todayLabel = useMemo(
+    () =>
+      new Date().toLocaleDateString(getLocale(language), {
+        month: 'long',
+        day: 'numeric',
+      }),
+    [language],
+  )
+
+  const firstName = user?.full_name?.trim().split(/\s+/)[0] ?? 'Planner'
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+
+    if (hour < 12) {
+      return t('page.dashboard.greeting_morning', { name: firstName })
+    }
+
+    if (hour < 18) {
+      return t('page.dashboard.greeting_afternoon', { name: firstName })
+    }
+
+    return t('page.dashboard.greeting_evening', { name: firstName })
+  }, [firstName, t])
 
   if (isLoading) {
     return (
@@ -464,36 +604,252 @@ function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8 p-3 md:p-6 lg:p-8">
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title={t('page.dashboard.total_balance')}
-          value={formatCurrency(totals.balance)}
-          accent="blue"
-          icon={HiOutlineBanknotes}
+    <div className="space-y-4 p-2 sm:space-y-6 sm:p-3 md:p-6 lg:p-8">
+      <div className="space-y-4 lg:hidden">
+        <HomeHero
+          greeting={greeting}
+          dateLabel={todayLabel}
+          balance={formatCurrency(totals.balance)}
+          notesCount={notes.length}
+          alertsCount={budgetAlerts.length}
+          balanceLabel={t('page.dashboard.total_balance')}
+          t={t}
         />
-        <StatCard
-          title={t('page.transactions.total_income')}
-          value={formatCurrency(totals.income)}
-          accent="green"
-          icon={HiOutlineArrowTrendingUp}
+
+        <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2">
+          {[
+            {
+              title: t('page.dashboard.total_balance'),
+              value: formatCurrency(totals.balance),
+              icon: HiOutlineWallet,
+              tone: 'bg-[var(--color-primary-pale)] text-[var(--color-primary)]',
+            },
+            {
+              title: t('page.transactions.total_income'),
+              value: formatCurrency(totals.income),
+              icon: HiOutlineArrowTrendingUp,
+              tone: 'bg-[var(--color-success-soft)] text-[var(--color-success)]',
+            },
+            {
+              title: t('page.transactions.total_expenses'),
+              value: formatCurrency(totals.expense),
+              icon: HiOutlineArrowTrendingDown,
+              tone: 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]',
+            },
+            {
+              title: t('page.dashboard.total_savings'),
+              value: formatCurrency(totals.savings),
+              icon: HiOutlineBanknotes,
+              tone: 'bg-[var(--color-purple-soft)] text-[var(--color-purple)]',
+            },
+          ].map((item, index, list) => {
+            const Icon = item.icon
+
+            return (
+              <div
+                key={item.title}
+                className={`flex items-center gap-3 px-3 py-3 ${
+                  index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''
+                }`}
+              >
+                <div className={`mobile-icon-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${item.tone}`}>
+                  <Icon className="text-lg" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                    {item.title}
+                  </p>
+                  <p className="mt-1 text-xl font-extrabold tracking-tight text-[var(--color-text)]">
+                    {item.value}
+                  </p>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <div>
+          <MobileSectionHeading title={t('page.dashboard.recent_transactions')} to="/transactions" t={t} />
+          <div className="mobile-surface-card rounded-[28px] p-2">
+            {recentTransactions.length === 0 ? (
+              <div className="p-3">
+                <EmptyState
+                  icon={HiOutlineChartBarSquare}
+                  title={t('page.transactions.empty_title')}
+                  description={t('page.dashboard.no_transactions_description')}
+                />
+              </div>
+            ) : (
+              recentTransactions.map((item, index) => (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 px-3 py-3 ${
+                    index < recentTransactions.length - 1 ? 'border-b border-[var(--color-border)]/60' : ''
+                  }`}
+                >
+                  <div
+                    className={`mobile-icon-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+                      item.type === 'income'
+                        ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                        : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
+                    }`}
+                  >
+                    {item.type === 'income' ? (
+                      <HiOutlineArrowTrendingUp className="text-lg" />
+                    ) : (
+                      <HiOutlineReceiptPercent className="text-lg" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-[var(--color-text)]">{item.title}</p>
+                    <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                      {formatShortDate(item.transaction_date)}
+                    </p>
+                  </div>
+                  <p
+                    className={`shrink-0 text-sm font-extrabold ${
+                      item.type === 'income'
+                        ? 'text-[var(--color-success)]'
+                        : 'text-[var(--color-danger)]'
+                    }`}
+                  >
+                    {item.type === 'income' ? '+' : '-'}
+                    {formatCurrency(item.amount)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        <div>
+          <MobileSectionHeading title={t('budgets')} to="/budgets" t={t} />
+          <div className="mobile-surface-card rounded-[28px] p-4">
+            {budgetCards.length === 0 ? (
+              <EmptyState
+                icon={HiOutlineShieldCheck}
+                title={t('page.budgets.empty_title')}
+                description={t('page.dashboard.no_budgets_description')}
+              />
+            ) : (
+              <div className="space-y-4">
+                {budgetCards.slice(0, 4).map((item) => (
+                  <div key={item.id}>
+                    <div className="mb-1.5 flex items-center justify-between gap-3">
+                      <p className="truncate text-sm font-bold text-[var(--color-text)]">{item.label}</p>
+                      <p className="shrink-0 text-sm font-bold text-[var(--color-text-muted)]">
+                        {item.progress}%
+                      </p>
+                    </div>
+                    <p className="text-xs text-[var(--color-text-muted)]">
+                      {formatCurrency(item.spent)} / {formatCurrency(item.limit)}
+                    </p>
+                    <AnimatedProgressBar progress={item.progress} color={item.gradient} className="mt-2" />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <QuickAction
+            to="/analytics"
+            label={t('analytics')}
+            icon={HiOutlineChartBarSquare}
+            tone="bg-[var(--color-warning-soft)] text-[var(--color-warning)]"
+          />
+          <QuickAction
+            to="/notes"
+            label={t('notes')}
+            icon={HiOutlineClipboardDocumentList}
+            tone="bg-[var(--color-purple-soft)] text-[var(--color-purple)]"
+          />
+        </div>
+      </div>
+
+      <div className="hidden lg:block">
+        <HomeHero
+          greeting={greeting}
+          dateLabel={todayLabel}
+          balance={formatCurrency(totals.balance)}
+          notesCount={notes.length}
+          alertsCount={budgetAlerts.length}
+          balanceLabel={t('page.dashboard.total_balance')}
+          t={t}
         />
-        <StatCard
-          title={t('page.transactions.total_expenses')}
-          value={formatCurrency(totals.expense)}
-          accent="red"
-          icon={HiOutlineArrowTrendingDown}
-        />
-        <StatCard
-          title={t('page.dashboard.total_savings')}
-          value={formatCurrency(totals.savings)}
-          accent="purple"
-          icon={HiOutlineWallet}
-        />
+
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between px-1">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+                {t('page.dashboard.quick_access')}
+              </p>
+              <h3 className="mt-1 text-lg font-extrabold text-[var(--color-text)]">{t('page.dashboard.move_faster')}</h3>
+            </div>
+            <span className="rounded-full bg-[var(--color-primary-pale)] px-3 py-1 text-xs font-bold text-[var(--color-primary)]">
+              {t('page.dashboard.shortcuts_count', { count: 4 })}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+            <QuickAction
+              to="/transactions"
+              label={t('transactions')}
+              icon={HiOutlineBars3}
+              tone="bg-[var(--color-primary-pale)] text-[var(--color-primary)]"
+            />
+            <QuickAction
+              to="/budgets"
+              label={t('budgets')}
+              icon={HiOutlineShieldCheck}
+              tone="bg-[var(--color-success-soft)] text-[var(--color-success)]"
+            />
+            <QuickAction
+              to="/analytics"
+              label={t('analytics')}
+              icon={HiOutlineChartBarSquare}
+              tone="bg-[var(--color-warning-soft)] text-[var(--color-warning)]"
+            />
+            <QuickAction
+              to="/notes"
+              label={t('notes')}
+              icon={HiOutlineClipboardDocumentList}
+              tone="bg-[var(--color-purple-soft)] text-[var(--color-purple)]"
+            />
+          </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4 md:gap-5">
+          <StatCard
+            title={t('page.dashboard.total_balance')}
+            value={formatCurrency(totals.balance)}
+            accent="blue"
+            icon={HiOutlineBanknotes}
+          />
+          <StatCard
+            title={t('page.transactions.total_income')}
+            value={formatCurrency(totals.income)}
+            accent="green"
+            icon={HiOutlineArrowTrendingUp}
+          />
+          <StatCard
+            title={t('page.transactions.total_expenses')}
+            value={formatCurrency(totals.expense)}
+            accent="red"
+            icon={HiOutlineArrowTrendingDown}
+          />
+          <StatCard
+            title={t('page.dashboard.total_savings')}
+            value={formatCurrency(totals.savings)}
+            accent="purple"
+            icon={HiOutlineWallet}
+          />
+        </div>
       </div>
 
       {budgetAlerts.length > 0 && (
-        <div className="relative overflow-hidden rounded-[28px] border border-[var(--color-warning)]/20 bg-[var(--color-warning-soft)]/40 p-5 shadow-[var(--shadow-soft)] md:p-6">
+        <div className="relative hidden overflow-hidden rounded-[30px] border border-[var(--color-warning)]/18 bg-[linear-gradient(145deg,rgba(255,251,235,0.98),rgba(255,247,237,0.95))] p-5 shadow-[var(--shadow-soft)] md:p-6 lg:block">
           <div className="mb-5 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f59e0b] to-[#fbbf24] text-white shadow-lg shadow-[#f59e0b]/20">
               <HiOutlineBellAlert className="text-xl" />
@@ -547,9 +903,9 @@ function DashboardPage() {
         </div>
       )}
 
-      <div className="grid gap-8 xl:grid-cols-[1.15fr_0.85fr]">
-        <GlassCard>
-          <div className="mb-6 flex items-center justify-between">
+      <div className="hidden gap-4 xl:grid-cols-[1.15fr_0.85fr] xl:gap-8 lg:grid">
+        <GlassCard className="p-4 sm:p-6">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4f46e5] to-[#818cf8] text-white shadow-lg shadow-[#4f46e5]/20">
                 <HiOutlineChartBarSquare className="text-xl" />
@@ -562,7 +918,7 @@ function DashboardPage() {
               </div>
             </div>
 
-            <span className="rounded-full bg-[var(--color-primary-pale)] px-4 py-1.5 text-sm font-bold text-[var(--color-primary)]">
+            <span className="w-fit rounded-full bg-[var(--color-primary-pale)] px-4 py-1.5 text-sm font-bold text-[var(--color-primary)]">
               {t('page.dashboard.shown_count', { count: recentTransactions.length })}
             </span>
           </div>
@@ -574,56 +930,22 @@ function DashboardPage() {
               description={t('page.dashboard.no_transactions_description')}
             />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-[var(--color-border)]/70">
-                    <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_date')}</th>
-                    <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_description')}</th>
-                    <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_category')}</th>
-                    <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_type')}</th>
-                    <th className="pb-4 text-right text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_amount')}</th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {recentTransactions.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b border-[var(--color-border)]/40 transition-colors last:border-b-0 hover:bg-[var(--color-surface-soft)]"
-                    >
-                      <td className="py-4 text-[var(--color-text-muted)]">
-                        {formatShortDate(item.transaction_date)}
-                      </td>
-
-                      <td className="py-4 font-bold text-[var(--color-text)]">
-                        {item.title}
-                      </td>
-
-                      <td className="py-4">
-                        <span
-                          className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                            item.type === 'income'
-                              ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
-                              : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
-                          }`}
-                        >
-                          {categoryMap.get(item.category_id ?? '') ?? t('common.no_category')}
-                        </span>
-                      </td>
-
-                      <td
-                        className={`py-4 font-bold ${
-                          item.type === 'income'
-                            ? 'text-[var(--color-success)]'
-                            : 'text-[var(--color-danger)]'
-                        }`}
-                      >
-                        {item.type === 'income' ? t('common.income') : t('common.expense')}
-                      </td>
-
-                      <td
-                        className={`py-4 text-right text-base font-extrabold ${
+            <>
+              <div className="space-y-3 sm:hidden">
+                {recentTransactions.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-2xl border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-bold text-[var(--color-text)]">{item.title}</p>
+                        <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                          {formatShortDate(item.transaction_date)}
+                        </p>
+                      </div>
+                      <p
+                        className={`shrink-0 text-right text-base font-extrabold ${
                           item.type === 'income'
                             ? 'text-[var(--color-success)]'
                             : 'text-[var(--color-danger)]'
@@ -631,16 +953,101 @@ function DashboardPage() {
                       >
                         {item.type === 'income' ? '+' : '-'}
                         {formatCurrency(item.amount)}
-                      </td>
+                      </p>
+                    </div>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                          item.type === 'income'
+                            ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                            : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
+                        }`}
+                      >
+                        {categoryMap.get(item.category_id ?? '') ?? t('common.no_category')}
+                      </span>
+                      <span
+                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${
+                          item.type === 'income'
+                            ? 'bg-[var(--color-primary-pale)] text-[var(--color-success)]'
+                            : 'bg-[var(--color-primary-pale)] text-[var(--color-danger)]'
+                        }`}
+                      >
+                        {item.type === 'income' ? t('common.income') : t('common.expense')}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="hidden overflow-x-auto sm:block">
+                <table className="min-w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-[var(--color-border)]/70">
+                      <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_date')}</th>
+                      <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_description')}</th>
+                      <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_category')}</th>
+                      <th className="pb-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_type')}</th>
+                      <th className="pb-4 text-right text-xs font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.dashboard.table_amount')}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+
+                  <tbody>
+                    {recentTransactions.map((item) => (
+                      <tr
+                        key={item.id}
+                        className="border-b border-[var(--color-border)]/40 transition-colors last:border-b-0 hover:bg-[var(--color-surface-soft)]"
+                      >
+                        <td className="py-4 text-[var(--color-text-muted)]">
+                          {formatShortDate(item.transaction_date)}
+                        </td>
+
+                        <td className="py-4 font-bold text-[var(--color-text)]">
+                          {item.title}
+                        </td>
+
+                        <td className="py-4">
+                          <span
+                            className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
+                              item.type === 'income'
+                                ? 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
+                                : 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
+                            }`}
+                          >
+                            {categoryMap.get(item.category_id ?? '') ?? t('common.no_category')}
+                          </span>
+                        </td>
+
+                        <td
+                          className={`py-4 font-bold ${
+                            item.type === 'income'
+                              ? 'text-[var(--color-success)]'
+                              : 'text-[var(--color-danger)]'
+                          }`}
+                        >
+                          {item.type === 'income' ? t('common.income') : t('common.expense')}
+                        </td>
+
+                        <td
+                          className={`py-4 text-right text-base font-extrabold ${
+                            item.type === 'income'
+                              ? 'text-[var(--color-success)]'
+                              : 'text-[var(--color-danger)]'
+                          }`}
+                        >
+                          {item.type === 'income' ? '+' : '-'}
+                          {formatCurrency(item.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </GlassCard>
 
-        <GlassCard>
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-6 flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f59e0b] to-[#fbbf24] text-white shadow-lg shadow-[#f59e0b]/20">
               <HiOutlineArrowTrendingDown className="text-xl" />
@@ -747,8 +1154,8 @@ function DashboardPage() {
         </GlassCard>
       </div>
 
-      <div className="grid gap-8 xl:grid-cols-[1.25fr_0.75fr_0.75fr]">
-        <GlassCard>
+      <div className="hidden gap-4 xl:grid-cols-[1.25fr_0.75fr_0.75fr] xl:gap-8 lg:grid">
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#22c55e] to-[#4ade80] text-white shadow-lg shadow-[#22c55e]/20">
@@ -761,7 +1168,7 @@ function DashboardPage() {
             </div>
 
             <span className="rounded-full bg-[var(--color-success-soft)] px-4 py-1.5 text-sm font-bold text-[var(--color-success)]">
-              {budgets.length} items
+              {t('common.items_count', { count: budgets.length })}
             </span>
           </div>
 
@@ -778,7 +1185,7 @@ function DashboardPage() {
                   key={item.id}
                   className="rounded-2xl border border-[var(--color-border)]/70 p-5 transition hover:bg-[var(--color-surface-soft)]"
                 >
-                  <div className="mb-3 flex items-center justify-between">
+                  <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <p className="text-base font-extrabold text-[var(--color-text)]">
                       {item.label}
                     </p>
@@ -787,7 +1194,7 @@ function DashboardPage() {
 
                   <AnimatedProgressBar progress={item.progress} color={item.gradient} />
 
-                  <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+                  <div className="mt-4 grid gap-3 text-xs sm:grid-cols-3">
                     <div>
                       <p className="text-[var(--color-text-muted)]">{t('budgets')}</p>
                       <p className="mt-0.5 font-bold text-[var(--color-text)]">
@@ -821,7 +1228,7 @@ function DashboardPage() {
           </div>
         </GlassCard>
 
-        <GlassCard>
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8b5cf6] to-[#a78bfa] text-white shadow-lg shadow-[#8b5cf6]/20">
@@ -836,7 +1243,7 @@ function DashboardPage() {
             </div>
 
             <span className="rounded-full bg-[var(--color-purple-soft)] px-4 py-1.5 text-sm font-bold text-[var(--color-purple)]">
-              {savingsGoals.length} items
+              {t('common.items_count', { count: savingsGoals.length })}
             </span>
           </div>
 
@@ -895,7 +1302,7 @@ function DashboardPage() {
           )}
         </GlassCard>
 
-        <GlassCard>
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ef4444] to-[#f87171] text-white shadow-lg shadow-[#ef4444]/20">
@@ -908,7 +1315,7 @@ function DashboardPage() {
             </div>
 
             <span className="rounded-full bg-[var(--color-danger-soft)] px-4 py-1.5 text-sm font-bold text-[var(--color-danger)]">
-              {debts.length} items
+              {t('common.items_count', { count: debts.length })}
             </span>
           </div>
 
@@ -962,7 +1369,7 @@ function DashboardPage() {
         </GlassCard>
       </div>
 
-      <GlassCard>
+      <GlassCard className="hidden p-4 sm:p-6 lg:block">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#06b6d4] to-[#22d3ee] text-white shadow-lg shadow-[#06b6d4]/20">
@@ -975,7 +1382,7 @@ function DashboardPage() {
           </div>
 
           <span className="rounded-full bg-[#06b6d4]/10 px-4 py-1.5 text-sm font-bold text-[#06b6d4]">
-            {notes.length} items
+            {t('common.items_count', { count: notes.length })}
           </span>
         </div>
 

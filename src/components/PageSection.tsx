@@ -11,18 +11,18 @@ interface PageSectionProps {
 function PageSection({ title, subtitle, action, children, className = '' }: PageSectionProps) {
   return (
     <section
-      className={`rounded-[32px] border border-[var(--color-border)] bg-[var(--color-surface-strong)] p-6 shadow-[var(--shadow-soft)] backdrop-blur transition-all duration-200 hover:shadow-[var(--shadow-card)] ${className}`.trim()}
+      className={`mobile-surface-card lift-hover rounded-[28px] p-4 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)] sm:rounded-[32px] sm:p-5 lg:p-6 ${className}`.trim()}
     >
       {(title || action) && (
-        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="mb-4 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
           <div>
             {title && (
-              <h3 className="text-lg font-extrabold tracking-tight text-[var(--color-text)]">
+              <h3 className="text-base font-extrabold tracking-tight text-[var(--color-text)] sm:text-lg">
                 {title}
               </h3>
             )}
             {subtitle && (
-              <p className="mt-1 text-sm leading-relaxed text-[var(--color-text-muted)]">
+              <p className="mt-0.5 text-xs leading-relaxed text-[var(--color-text-muted)] sm:mt-1 sm:text-sm">
                 {subtitle}
               </p>
             )}

@@ -27,17 +27,15 @@ import { usePreferences } from '../../hooks/usePreferences'
 import { useProfile } from '../../hooks/useProfile'
 import { useUsers } from '../../hooks/useUsers'
 
-const profileSchema = z.object({
-  full_name: z.string().min(2, 'Full name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email'),
-})
-
 const roleSchema = z.object({
   nextRole: z.enum(['user', 'admin']),
 })
 
-type ProfileFormValues = z.infer<typeof profileSchema>
 type RoleFormValues = z.infer<typeof roleSchema>
+type ProfileFormValues = {
+  full_name: string
+  email: string
+}
 
 type Accent = 'blue' | 'green' | 'purple' | 'orange' | 'teal'
 
@@ -89,7 +87,7 @@ function initials(name?: string) {
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface-strong)] p-6 shadow-[var(--shadow-soft)] ${className}`}
+      className={`mobile-surface-card min-w-0 rounded-[28px] p-4 shadow-[var(--shadow-soft)] sm:p-6 ${className}`}
     >
       {children}
     </div>
@@ -111,7 +109,7 @@ function SectionHeader({
 }) {
   const a = ACCENTS[accent]
   return (
-    <div className="flex items-center justify-between gap-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${a.soft} ${a.text}`}>
           <Icon className="text-lg" />
@@ -141,22 +139,23 @@ function PreferenceRow({
 }) {
   const a = ACCENTS[accent]
   return (
-    <div className="flex flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-      <div className="flex items-center gap-3">
+    <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 2xl:flex-row 2xl:items-center 2xl:justify-between 2xl:gap-4">
+      <div className="flex min-w-0 items-center gap-3">
         <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${a.soft} ${a.text}`}>
           <Icon className="text-base" />
         </span>
-        <p className="text-sm font-semibold text-[var(--color-text)]">{title}</p>
+        <p className="min-w-0 text-sm font-semibold text-[var(--color-text)]">{title}</p>
       </div>
-      <div className="sm:w-[220px] sm:shrink-0">{children}</div>
+      <div className="min-w-0 w-full 2xl:w-[220px] 2xl:shrink-0">{children}</div>
     </div>
   )
 }
 
 function ThemeToggle({ value, onChange }: { value: 'light' | 'dark'; onChange: (v: 'light' | 'dark') => void }) {
+  const { t } = usePreferences()
   const options: { key: 'light' | 'dark'; label: string; icon: typeof HiOutlineSun }[] = [
-    { key: 'light', label: 'Light', icon: HiOutlineSun },
-    { key: 'dark', label: 'Dark', icon: HiOutlineMoon },
+    { key: 'light', label: t('common.light'), icon: HiOutlineSun },
+    { key: 'dark', label: t('common.dark'), icon: HiOutlineMoon },
   ]
   return (
     <div className="grid grid-cols-2 gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1">
@@ -168,14 +167,14 @@ function ThemeToggle({ value, onChange }: { value: 'light' | 'dark'; onChange: (
             type="button"
             onClick={() => onChange(key)}
             aria-pressed={active}
-            className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${
+            className={`inline-flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2.5 py-2 text-xs font-semibold transition-colors sm:text-sm ${
               active
                 ? 'bg-[var(--color-primary-pale)] text-[var(--color-primary)]'
                 : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)]'
             }`}
           >
             <Icon className="text-base" />
-            {label}
+            <span className="truncate">{label}</span>
           </button>
         )
       })}
@@ -215,6 +214,14 @@ function SettingsPage() {
     user?.role === 'admin',
   )
   const [userQuery, setUserQuery] = useState('')
+  const profileSchema = useMemo(
+    () =>
+      z.object({
+        full_name: z.string().min(2, t('page.settings.validation.full_name')),
+        email: z.string().email(t('page.settings.validation.email')),
+      }),
+    [t],
+  )
 
   const {
     register: registerProfile,
@@ -275,10 +282,9 @@ function SettingsPage() {
   const adminCount = useMemo(() => users.filter((item) => item.role === 'admin').length, [users])
 
   return (
-    <div className="space-y-6 p-3 md:p-6 lg:p-8">
-      {/* ─── Profile & Preferences ────────────────────────────── */}
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       <div className="grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+        <Card className="order-2 xl:order-1 xl:col-span-2">
           <SectionHeader
             icon={HiOutlineIdentification}
             title={t('page.settings.profile_title')}
@@ -288,7 +294,7 @@ function SettingsPage() {
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
             {/* Avatar column */}
-            <div className="flex flex-col items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5 lg:col-span-1">
+            <div className="flex flex-col items-center gap-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] p-4 lg:col-span-1 lg:p-5">
               <label className="group relative block cursor-pointer">
                 {user?.avatar_url ? (
                   <img
@@ -333,7 +339,7 @@ function SettingsPage() {
               <div className="mb-5 flex flex-wrap gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-primary-pale)] px-3 py-1.5 text-xs font-bold capitalize text-[var(--color-primary)]">
                   <HiOutlineShieldCheck className="text-sm" />
-                  {user?.role ?? 'user'}
+                  {user?.role === 'admin' ? t('role_admin') : t('role_user')}
                 </span>
                 <span className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-surface-soft)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)]">
                   <HiOutlineEnvelope className="text-sm" />
@@ -359,7 +365,7 @@ function SettingsPage() {
                     <label className="mb-1.5 block text-sm font-semibold text-[var(--color-text)]">
                       {t('page.settings.email_address')}
                     </label>
-                    <input {...registerProfile('email')} placeholder="your@email.com" className={inputClass} />
+                    <input {...registerProfile('email')} placeholder={t('auth.email_placeholder')} className={inputClass} />
                     {profileErrors.email && (
                       <p className="mt-1.5 text-xs font-medium text-[var(--color-danger)]">
                         {profileErrors.email.message}
@@ -407,7 +413,7 @@ function SettingsPage() {
           </div>
         </Card>
 
-        <Card>
+        <Card className="order-1 xl:order-2 xl:min-w-0">
           <SectionHeader
             icon={HiOutlinePaintBrush}
             title={t('settings')}
@@ -420,7 +426,7 @@ function SettingsPage() {
               <select
                 value={language}
                 onChange={(event) => setLanguage(event.target.value as 'en' | 'ru')}
-                className={inputClass}
+                className={`${inputClass} min-w-0`}
               >
                 <option value="en">English</option>
                 <option value="ru">Русский</option>
@@ -431,7 +437,7 @@ function SettingsPage() {
               <select
                 value={currency}
                 onChange={(event) => setCurrency(event.target.value as 'USD' | 'UZS' | 'EUR' | 'RUB')}
-                className={inputClass}
+                className={`${inputClass} min-w-0`}
               >
                 <option value="USD">{t('page.settings.currency_usd')}</option>
                 <option value="UZS">{t('page.settings.currency_uzs')}</option>
@@ -447,7 +453,6 @@ function SettingsPage() {
         </Card>
       </div>
 
-      {/* ─── Admin: Users management ──────────────────────────── */}
       {user?.role === 'admin' && (
         <Card>
           <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -459,7 +464,7 @@ function SettingsPage() {
               count={`${users.length}`}
             />
 
-            <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
+            <div className="flex w-full items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 sm:w-auto">
               <HiOutlineSparkles className="text-base text-[var(--color-text-muted)]" />
               <select
                 {...registerRole('nextRole')}
@@ -521,7 +526,7 @@ function SettingsPage() {
 
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`rounded-lg px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide ${a.soft} ${a.text}`}>
-                        {item.role}
+                        {item.role === 'admin' ? t('role_admin') : t('role_user')}
                       </span>
 
                       <button

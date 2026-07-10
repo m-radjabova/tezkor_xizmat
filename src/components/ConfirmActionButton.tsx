@@ -60,21 +60,23 @@ function ConfirmActionButton({
 
       {/* Overlay */}
       <div
-        className={`fixed inset-0 z-50 flex items-center justify-center bg-black/30 px-4 backdrop-blur-sm transition-all duration-300 ease-out ${
+        className={`fixed inset-0 z-50 flex items-end justify-center bg-black/30 px-0 backdrop-blur-sm transition-all duration-300 ease-out sm:items-center sm:px-4 ${
           isOpen ? 'pointer-events-auto opacity-100' : 'pointer-events-none opacity-0'
         }`}
         onClick={() => setIsOpen(false)}
       >
         {/* Modal */}
         <div
-          className={`w-full max-w-md rounded-[32px] border border-[var(--color-border)] bg-[var(--color-surface-strong)] p-6 shadow-[0_32px_64px_rgba(0,0,0,0.12)] backdrop-blur-xl transition-all duration-300 ease-out ${
-            isOpen ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-95 opacity-0'
+          className={`w-full max-w-md rounded-t-[32px] border border-[var(--color-border)] bg-[var(--color-surface-strong)] p-6 shadow-[0_32px_64px_rgba(0,0,0,0.12)] backdrop-blur-xl transition-all duration-300 ease-out sm:rounded-[32px] ${
+            isOpen ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-8 scale-95 opacity-0'
           }`}
           onClick={(e) => e.stopPropagation()}
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-title"
         >
+          {/* Drag handle for mobile */}
+          <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--color-border)] sm:hidden" />
           <div
             className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
               isDanger
@@ -94,7 +96,7 @@ function ConfirmActionButton({
 
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-muted)]">{confirmText}</p>
 
-          <div className="mt-6 flex gap-3">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => setIsOpen(false)}

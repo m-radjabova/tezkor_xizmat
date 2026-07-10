@@ -99,7 +99,7 @@ function ExpensesPage() {
     const totals = new Map<string, { amount: number; color: string }>()
 
     expenses.forEach((expense) => {
-      const categoryName = categoryNameMap.get(expense.category_id ?? '') ?? 'No category'
+      const categoryName = categoryNameMap.get(expense.category_id ?? '') ?? t('common.no_category')
       const categoryColor = categoryColorMap.get(expense.category_id ?? '') ?? '#d87289'
       const current = totals.get(categoryName)
       totals.set(categoryName, {
@@ -113,7 +113,7 @@ function ExpensesPage() {
       amount,
       color,
     }))
-  }, [expenses, categoryNameMap, categoryColorMap])
+  }, [expenses, categoryNameMap, categoryColorMap, t])
 
   const biggestCategory = useMemo(
     () =>
@@ -129,17 +129,29 @@ function ExpensesPage() {
   )
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
-      
-
-      {/* Summary cards */}
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       {isLoading ? (
         <SummarySkeleton />
       ) : (
-        <div className="grid gap-4 md:grid-cols-4">
+        <>
+        <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 sm:hidden">
+          {[
+            { label: t('page.expenses.total_expenses'), value: formatCurrency(totalExpense), tone: 'text-[var(--color-danger)]' },
+            { label: t('page.expenses.transactions'), value: String(expenses.length), tone: 'text-[var(--color-text)]' },
+            { label: t('page.expenses.categories_used'), value: String(totalsByCategory.length), tone: 'text-[var(--color-purple)]' },
+            { label: t('page.expenses.average_expense'), value: expenses.length > 0 ? formatCurrency(averageExpense) : formatCurrency(0), tone: 'text-[var(--color-warning)]' },
+          ].map((item, index, list) => (
+            <div key={item.label} className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{item.label}</p>
+              <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4">
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-danger)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">Total expenses</p>
+            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.expenses.total_expenses')}</p>
             <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-danger)]">
               {formatCurrency(totalExpense)}
             </p>
@@ -147,7 +159,7 @@ function ExpensesPage() {
 
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">Transactions</p>
+            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.expenses.transactions')}</p>
             <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-text)]">
               {expenses.length}
             </p>
@@ -155,7 +167,7 @@ function ExpensesPage() {
 
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">Categories used</p>
+            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.expenses.categories_used')}</p>
             <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-purple)]">
               {totalsByCategory.length}
             </p>
@@ -163,12 +175,13 @@ function ExpensesPage() {
 
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-warning)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">Average expense</p>
+            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.expenses.average_expense')}</p>
             <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-warning)]">
               {expenses.length > 0 ? formatCurrency(averageExpense) : formatCurrency(0)}
             </p>
           </div>
         </div>
+        </>
       )}
 
       {/* Category breakdown */}
@@ -190,18 +203,18 @@ function ExpensesPage() {
         ) : (
           <>
             {/* Summary bar */}
-            <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+            <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
               <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                 {totalsByCategory.length} {totalsByCategory.length === 1 ? t('page.categories.category_singular') : t('page.categories.category_plural')}
               </span>
-              <span className="h-3 w-px bg-[var(--color-border)]" />
+              <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
               <span className="flex items-center gap-1.5 text-sm font-semibold">
                 <HiOutlineBanknotes className="text-sm text-[var(--color-danger)]" />
                 <span className="text-[var(--color-danger)]">{formatCurrency(totalExpense)} {t('common.total')}</span>
               </span>
               {biggestCategory && (
                 <>
-                  <span className="h-3 w-px bg-[var(--color-border)]" />
+                  <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                   <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-muted)]">
                     <HiOutlineFire className="text-sm text-[var(--color-warning)]" />
                     {t('page.expenses.most_spent')}: {biggestCategory.label}
@@ -211,7 +224,7 @@ function ExpensesPage() {
             </div>
 
             {/* Category grid */}
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 sm:gap-4">
               {totalsByCategory.map((expense) => {
                 const percentage = maxCategoryAmount > 0 ? (expense.amount / maxCategoryAmount) * 100 : 0
                 return (
@@ -292,18 +305,18 @@ function ExpensesPage() {
         ) : (
           <>
             {/* Summary bar */}
-            <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+            <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
               <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                 {expenses.length} {expenses.length === 1 ? t('page.transactions.transaction_singular') : t('page.transactions.transaction_plural')}
               </span>
-              <span className="h-3 w-px bg-[var(--color-border)]" />
+              <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
               <span className="flex items-center gap-1.5 text-sm font-semibold">
                 <HiOutlineBanknotes className="text-sm text-[var(--color-danger)]" />
                 <span className="text-[var(--color-danger)]">{formatCurrency(totalExpense)} {t('common.total')}</span>
               </span>
               {expenses.length > 1 && (
                 <>
-                  <span className="h-3 w-px bg-[var(--color-border)]" />
+                  <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                   <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-muted)]">
                     {t('common.average_short')} {formatCurrency(averageExpense)}
                   </span>
@@ -312,14 +325,14 @@ function ExpensesPage() {
             </div>
 
             {/* List */}
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {expenses.map((expense, index) => {
                 const categoryColor = categoryColorMap.get(expense.category_id ?? '') ?? '#d87289'
                 const categoryName = categoryNameMap.get(expense.category_id ?? '')
                 return (
                   <div
                     key={expense.id}
-                    className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70"
+                    className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70 sm:p-5"
                     style={{ animationDelay: `${index * 60}ms` }}
                   >
                     {/* Gradient accent */}
@@ -343,7 +356,7 @@ function ExpensesPage() {
                               style={{ backgroundColor: categoryColor }}
                             />
                           </span>
-                          <p className="truncate text-lg font-bold text-[var(--color-text)]">
+                          <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
                             {expense.title}
                           </p>
                         </div>
@@ -386,8 +399,8 @@ function ExpensesPage() {
                       </div>
 
                       {/* Amount */}
-                      <div className="flex shrink-0 items-center gap-3">
-                        <p className="text-2xl font-extrabold text-[var(--color-danger)]">
+                      <div className="flex shrink-0 items-center justify-end gap-3">
+                        <p className="text-xl font-extrabold text-[var(--color-danger)] sm:text-2xl">
                           -{formatCurrency(expense.amount)}
                         </p>
                       </div>

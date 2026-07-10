@@ -62,7 +62,7 @@ function SectionHeader({ icon: Icon, title, subtitle, gradient, count }: { icon:
   }
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-3">
         <div className={`flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${gradientColors[gradient] || gradientColors.blue} text-white shadow-lg ${shadowColors[gradient] || shadowColors.blue}`}>
           <Icon className="text-xl" />
@@ -73,7 +73,7 @@ function SectionHeader({ icon: Icon, title, subtitle, gradient, count }: { icon:
         </div>
       </div>
       {count && (
-        <span className={`rounded-full bg-gradient-to-r ${bgColors[gradient] || bgColors.blue} px-4 py-1.5 text-sm font-bold text-[var(--color-primary)]`}>
+        <span className={`w-fit rounded-full bg-gradient-to-r ${bgColors[gradient] || bgColors.blue} px-4 py-1.5 text-sm font-bold text-[var(--color-primary)]`}>
           {count}
         </span>
       )}
@@ -162,14 +162,14 @@ function AnalyticsPage() {
       const limit = Number(budget.limit_amount)
       return {
         id: budget.id,
-        label: categoryMap.get(budget.category_id ?? '') ?? 'No category',
+        label: categoryMap.get(budget.category_id ?? '') ?? t('common.no_category'),
         spent,
         limit,
         percent: limit > 0 ? Math.min(100, Math.round((spent / limit) * 100)) : 0,
         fill: limit > 0 && spent / limit >= 0.8 ? '#ef4444' : '#e5a4b8',
       }
     })
-  }, [budgets, categories, filteredTransactions])
+  }, [budgets, categories, filteredTransactions, t])
 
   const hasExpenseData = expenseTrend.length > 0
   const hasIncomeData = incomeTrend.length > 0
@@ -177,32 +177,59 @@ function AnalyticsPage() {
   const hasBudgetData = budgetUsage.length > 0
 
   return (
-    <div className="space-y-8 p-3 md:p-6 lg:p-8">
-      {/* ── Summary stat cards ── */}
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-        <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-soft)] transition-all duration-300 hover:shadow-[var(--shadow-card)]">
+    <div className="mobile-page space-y-6 p-2 sm:p-3 md:space-y-8 md:p-6 lg:p-8">
+      <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 sm:hidden">
+        {[
+          { label: t('page.analytics.transactions'), value: String(filteredTransactions.length), icon: HiOutlineBanknotes, tone: 'text-[var(--color-primary)] bg-[var(--color-primary-pale)]' },
+          { label: t('page.analytics.budgets'), value: String(budgets.length), icon: HiOutlineArrowTrendingUp, tone: 'text-[var(--color-success)] bg-[var(--color-success-soft)]' },
+          { label: t('savings_goals'), value: String(savingsGoals.length), icon: HiOutlineWallet, tone: 'text-[var(--color-purple)] bg-[var(--color-purple-soft)]' },
+          { label: t('categories'), value: String(categories.length), icon: HiOutlineChartBarSquare, tone: 'text-[var(--color-danger)] bg-[var(--color-danger-soft)]' },
+        ].map((item, index, list) => {
+          const Icon = item.icon
+
+          return (
+            <div
+              key={item.label}
+              className={`flex items-center gap-3 px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}
+            >
+              <div className={`mobile-icon-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${item.tone}`}>
+                <Icon className="text-lg" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                  {item.label}
+                </p>
+                <p className="mt-1 text-xl font-extrabold tracking-tight text-[var(--color-text)]">{item.value}</p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-4 md:gap-5">
+        <div className="mobile-surface-card group relative overflow-hidden rounded-[28px] p-5 transition-all duration-300 hover:shadow-[var(--shadow-card)] sm:p-6">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-primary)]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <div className="relative">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-primary-pale)] text-[var(--color-primary)] ring-1 ring-[var(--color-primary)]/10">
               <HiOutlineBanknotes className="text-xl" />
             </div>
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">Transactions</p>
+            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.analytics.transactions')}</p>
             <p className="mt-2 text-3xl font-extrabold tracking-tight text-[var(--color-text)]">{filteredTransactions.length}</p>
           </div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-soft)] transition-all duration-300 hover:shadow-[var(--shadow-card)]">
+        <div className="mobile-surface-card group relative overflow-hidden rounded-[28px] p-5 transition-all duration-300 hover:shadow-[var(--shadow-card)] sm:p-6">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-success)]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <div className="relative">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-success-soft)] text-[var(--color-success)] ring-1 ring-[var(--color-success)]/10">
               <HiOutlineArrowTrendingUp className="text-xl" />
             </div>
-            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">Budgets</p>
+            <p className="mt-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{t('page.analytics.budgets')}</p>
             <p className="mt-2 text-3xl font-extrabold tracking-tight text-[var(--color-text)]">{budgets.length}</p>
           </div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-soft)] transition-all duration-300 hover:shadow-[var(--shadow-card)]">
+        <div className="mobile-surface-card group relative overflow-hidden rounded-[28px] p-5 transition-all duration-300 hover:shadow-[var(--shadow-card)] sm:p-6">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-purple)]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <div className="relative">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-purple-soft)] text-[var(--color-purple)] ring-1 ring-[var(--color-purple)]/10">
@@ -213,7 +240,7 @@ function AnalyticsPage() {
           </div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-soft)] transition-all duration-300 hover:shadow-[var(--shadow-card)]">
+        <div className="mobile-surface-card group relative overflow-hidden rounded-[28px] p-5 transition-all duration-300 hover:shadow-[var(--shadow-card)] sm:p-6">
           <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-danger)]/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           <div className="relative">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--color-danger-soft)] text-[var(--color-danger)] ring-1 ring-[var(--color-danger)]/10">
@@ -225,9 +252,8 @@ function AnalyticsPage() {
         </div>
       </div>
 
-      {/* ── Expense & Income Trends ── */}
-      <div className="grid gap-8 xl:grid-cols-2">
-        <GlassCard>
+      <div className="grid gap-4 xl:grid-cols-2 xl:gap-8">
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-5">
             <SectionHeader
               icon={HiOutlineArrowTrendingDown}
@@ -244,7 +270,7 @@ function AnalyticsPage() {
               description={t('page.analytics.no_expense_data_description')}
             />
           ) : (
-            <div className="h-[280px] w-full">
+            <div className="h-[220px] w-full sm:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={expenseTrend} margin={{ top: 12, right: 8, left: 12, bottom: 4 }}>
                   <defs>
@@ -274,7 +300,7 @@ function AnalyticsPage() {
           )}
         </GlassCard>
 
-        <GlassCard>
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-5">
             <SectionHeader
               icon={HiOutlineArrowTrendingUp}
@@ -291,7 +317,7 @@ function AnalyticsPage() {
               description={t('page.analytics.no_income_data_description')}
             />
           ) : (
-            <div className="h-[280px] w-full">
+            <div className="h-[220px] w-full sm:h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={incomeTrend} margin={{ top: 12, right: 8, left: 12, bottom: 4 }}>
                   <defs>
@@ -322,9 +348,8 @@ function AnalyticsPage() {
         </GlassCard>
       </div>
 
-      {/* ── Savings & Budget Usage ── */}
-      <div className="grid gap-8 xl:grid-cols-2">
-        <GlassCard>
+      <div className="grid gap-4 xl:grid-cols-2 xl:gap-8">
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-5">
             <SectionHeader
               icon={HiOutlineWallet}
@@ -341,7 +366,7 @@ function AnalyticsPage() {
               description={t('page.analytics.no_savings_data_description')}
             />
           ) : (
-            <div className="h-[300px] w-full">
+            <div className="h-[240px] w-full sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={savingsTrend} layout="vertical" margin={{ top: 8, right: 18, left: 18, bottom: 8 }}>
                   <CartesianGrid horizontal={false} stroke="var(--color-border)" strokeDasharray="3 3" strokeOpacity={0.5} />
@@ -379,7 +404,7 @@ function AnalyticsPage() {
           )}
         </GlassCard>
 
-        <GlassCard>
+        <GlassCard className="p-4 sm:p-6">
           <div className="mb-5">
             <SectionHeader
               icon={HiOutlineShieldCheck}
@@ -396,7 +421,7 @@ function AnalyticsPage() {
               description={t('page.analytics.no_budgets_description')}
             />
           ) : (
-            <div className="h-[300px] w-full">
+            <div className="h-[240px] w-full sm:h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={budgetUsage} layout="vertical" margin={{ top: 8, right: 18, left: 18, bottom: 8 }}>
                   <CartesianGrid horizontal={false} stroke="var(--color-border)" strokeDasharray="3 3" strokeOpacity={0.5} />

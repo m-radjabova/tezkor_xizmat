@@ -151,43 +151,75 @@ function BudgetsPage() {
   }
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
-      
-
-      {/* Summary cards */}
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       {isLoading ? (
         <SummarySkeleton />
       ) : budgets.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.total_budgets')}</p>
-            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-primary)]">
-              {formatCurrency(totalBudget)}
-            </p>
+        <>
+          <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 sm:hidden">
+            {[
+              {
+                label: t('page.budgets.total_budgets'),
+                value: formatCurrency(totalBudget),
+                tone: 'text-[var(--color-primary)]',
+              },
+              {
+                label: t('page.budgets.categories_covered'),
+                value: `${categoriesCovered} / ${expenseCategories.length || 1}`,
+                tone: 'text-[var(--color-success)]',
+              },
+              {
+                label: t('page.budgets.active_budgets'),
+                value: String(budgets.length),
+                tone: 'text-[var(--color-purple)]',
+              },
+            ].map((item, index, list) => (
+              <div
+                key={item.label}
+                className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}
+              >
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                  {item.label}
+                </p>
+                <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+              </div>
+            ))}
           </div>
 
-          <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.categories_covered')}</p>
-            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">
-              {categoriesCovered} <span className="text-base font-semibold text-[var(--color-text-muted)]">/ {expenseCategories.length || 1}</span>
-            </p>
-          </div>
+          <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-3">
+            <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.total_budgets')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-primary)]">
+                {formatCurrency(totalBudget)}
+              </p>
+            </div>
 
-          <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.active_budgets')}</p>
-            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-purple)]">
-              {budgets.length}
-            </p>
+            <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.categories_covered')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">
+                {categoriesCovered} <span className="text-base font-semibold text-[var(--color-text-muted)]">/ {expenseCategories.length || 1}</span>
+              </p>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.active_budgets')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-purple)]">
+                {budgets.length}
+              </p>
+            </div>
           </div>
-        </div>
+        </>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        {/* ───── Form ───── */}
-        <PageSection title={t('page.budgets.form_title')} subtitle={t('page.budgets.form_subtitle')}>
+      <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
+        <PageSection
+          title={t('page.budgets.form_title')}
+          subtitle={t('page.budgets.form_subtitle')}
+          className="order-2 xl:order-1 xl:sticky xl:top-28"
+        >
           {isLoading ? (
             <FormSkeleton />
           ) : (
@@ -310,8 +342,11 @@ function BudgetsPage() {
           )}
         </PageSection>
 
-        {/* ───── Budget List ───── */}
-        <PageSection title={t('page.budgets.list_title')} subtitle={t('page.budgets.list_subtitle')}>
+        <PageSection
+          title={t('page.budgets.list_title')}
+          subtitle={t('page.budgets.list_subtitle')}
+          className="order-1 xl:order-2"
+        >
           {isLoading ? (
             <div className="mt-5 space-y-4">
               {[1, 2, 3, 4].map((i) => (
@@ -329,18 +364,18 @@ function BudgetsPage() {
           ) : (
             <>
               {/* Summary bar */}
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+              <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                   {budgets.length} {budgets.length === 1 ? t('page.budgets.budget_singular') : t('page.budgets.budget_plural')}
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineBanknotes className="text-sm text-[var(--color-primary)]" />
                   <span className="text-[var(--color-primary)]">{formatCurrency(totalBudget)} {t('common.total')}</span>
                 </span>
                 {budgets.length > 1 && (
                   <>
-                    <span className="h-3 w-px bg-[var(--color-border)]" />
+                    <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                     <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-muted)]">
                       {t('common.average_short')} {formatCurrency(averageBudget)}
                     </span>
@@ -349,7 +384,7 @@ function BudgetsPage() {
               </div>
 
               {/* Budget list */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {budgets.map((budget, index) => {
                   const categoryColor = categoryColorMap.get(budget.category_id ?? '') ?? '#e5a4b8'
                   const categoryName = categoryNameMap.get(budget.category_id ?? '')
@@ -359,7 +394,7 @@ function BudgetsPage() {
                   return (
                     <div
                       key={budget.id}
-                      className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70"
+                      className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70 sm:p-5"
                       style={{ animationDelay: `${index * 60}ms` }}
                     >
                       {/* Gradient accent */}
@@ -383,7 +418,7 @@ function BudgetsPage() {
                                 style={{ backgroundColor: categoryColor }}
                               />
                             </span>
-                            <p className="truncate text-lg font-bold text-[var(--color-text)]">
+                            <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
                               {formatMonthYear(budget.month, budget.year)}
                             </p>
                           </div>
@@ -428,7 +463,7 @@ function BudgetsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex shrink-0 items-center gap-2">
+                        <div className="flex shrink-0 justify-end gap-2">
                           <button
                             type="button"
                             onClick={() =>

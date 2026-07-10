@@ -1,63 +1,40 @@
 import { NavLink } from 'react-router-dom'
-import {
-  HiBars3,
-  HiOutlineArrowLeftOnRectangle,
-  HiOutlineArrowTrendingDown,
-  HiOutlineArrowTrendingUp,
-  HiOutlineBanknotes,
-  HiOutlineBellAlert,
-  HiOutlineChartBarSquare,
-  HiOutlineChartPie,
-  HiOutlineClipboardDocumentList,
-  HiOutlineCog6Tooth,
-  HiOutlineCreditCard,
-  HiOutlineFolder,
-  HiOutlineHome,
-  HiOutlineArrowPathRoundedSquare,
-  HiOutlineWallet,
-} from 'react-icons/hi2'
-import { useAuth } from '../hooks/useAuth'
+import { HiBars3 } from 'react-icons/hi2'
 import { usePreferences } from '../hooks/usePreferences'
-import { formatUserRole } from '../utils/format'
 import plannerIcon from '../assets/icons/planner.png'
-import budgetIcon from '../assets/icons/budget.png'
-
-const sidebarItems = [
-  { to: '/dashboard', labelKey: 'dashboard', icon: HiOutlineHome },
-  { to: '/analytics', labelKey: 'analytics', icon: HiOutlineChartBarSquare },
-  { to: '/categories', labelKey: 'categories', icon: HiOutlineFolder },
-  { to: '/transactions', labelKey: 'transactions', icon: HiOutlineBanknotes },
-  { to: '/income', labelKey: 'income', icon: HiOutlineArrowTrendingUp },
-  { to: '/expenses', labelKey: 'expenses', icon: HiOutlineArrowTrendingDown },
-  { to: '/budgets', labelKey: 'budgets', icon: HiOutlineChartPie },
-  { to: '/savings-goals', labelKey: 'savings_goals', icon: HiOutlineWallet },
-  { to: '/recurring-transactions', labelKey: 'recurring', icon: HiOutlineArrowPathRoundedSquare },
-  { to: '/debts', labelKey: 'debts', icon: HiOutlineCreditCard },
-  { to: '/notes', labelKey: 'notes', icon: HiOutlineClipboardDocumentList },
-  { to: '/notifications', labelKey: 'notifications', icon: HiOutlineBellAlert },
-  { to: '/settings', labelKey: 'settings', icon: HiOutlineCog6Tooth },
-]
+import { sidebarItems } from './navigationItems'
 
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
+  onNavigate?: () => void
 }
 
-function Sidebar({ collapsed, onToggle }: SidebarProps) {
-  const { user, logout } = useAuth()
+function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
   const { t } = usePreferences()
-  const userInitial = user?.full_name?.charAt(0) ?? 'U'
 
   return (
     <aside
-      className={`relative flex h-full w-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[linear-gradient(180deg,var(--color-surface-strong),var(--color-surface-muted))] py-4 shadow-[var(--shadow-card)] backdrop-blur-2xl transition-all duration-300 ${
-        collapsed ? 'items-center px-2.5' : 'px-3'
+      className={`relative flex h-full w-full flex-col overflow-hidden border-r border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] py-4 shadow-[0_24px_50px_rgba(15,23,42,0.14)] backdrop-blur-3xl transition-all duration-300 lg:h-[100dvh] ${
+        collapsed ? 'items-center px-2.5' : 'px-3 sm:px-4'
       }`}
     >
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.08),transparent_68%)]" />
+      {/* Close button for mobile */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-2xl border border-white/70 bg-[var(--color-surface)] text-[var(--color-text-muted)] shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition-colors hover:text-[var(--color-text)] lg:hidden"
+        aria-label={t('accessibility.close_sidebar')}
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-[radial-gradient(circle_at_top,rgba(79,70,229,0.09),transparent_68%)]" />
+      <div className="pointer-events-none absolute left-[-2rem] top-28 h-40 w-40 rounded-full bg-[rgba(16,185,129,0.08)] blur-3xl" />
 
       <div
-        className={`relative flex w-full border-b border-[var(--color-border)]/70 pb-5 ${
+        className={`relative flex w-full border-b border-[var(--color-border)]/70 pb-5 pr-10 lg:pr-0 ${
           collapsed ? 'flex-col items-center gap-3' : 'items-center gap-4 px-2'
         }`}
       >
@@ -74,7 +51,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           type="button"
           onClick={onToggle}
-          className={`flex h-11 cursor-pointer w-11 shrink-0 items-center justify-center rounded-[20px] border border-[var(--color-border)] bg-[var(--color-surface)]/85 text-[var(--color-text-muted)] shadow-[0_10px_25px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-primary-pale)] hover:text-[var(--color-primary)] active:scale-95 ${
+          className={`hidden h-11 cursor-pointer w-11 shrink-0 items-center justify-center rounded-[20px] border border-[var(--color-border)] bg-[var(--color-surface)]/85 text-[var(--color-text-muted)] shadow-[0_10px_25px_rgba(15,23,42,0.05)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--color-primary)]/30 hover:bg-[var(--color-primary-pale)] hover:text-[var(--color-primary)] active:scale-95 lg:flex ${
             collapsed ? '' : 'order-2 ml-auto'
           }`}
           aria-label={collapsed ? t('open_sidebar') : t('collapse_sidebar')}
@@ -87,9 +64,6 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <h2 className="text-lg font-extrabold tracking-tight text-[var(--color-text)]">
               {t('app_name')}
             </h2>
-            <p className="truncate text-sm text-[var(--color-text-muted)]">
-              {t('app_tagline')}
-            </p>
           </div>
         )}
 
@@ -100,12 +74,12 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
         )}
       </div>
 
-      <nav aria-label="Primary" className={`relative mt-5 flex-1 ${collapsed ? 'w-full' : ''}`}>
+      <nav aria-label="Primary" className={`app-scrollbar relative mt-5 min-h-0 flex-1 overflow-y-auto ${collapsed ? 'w-full' : ''}`}>
         <div
           className={
             collapsed
               ? 'mx-auto w-[68px] space-y-2 rounded-[30px] border border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-surface-strong)_88%,transparent)] p-2.5 shadow-[var(--shadow-soft)] backdrop-blur-xl'
-              : 'space-y-1'
+              : 'space-y-1.5 px-1'
           }
         >
           {sidebarItems.map((item) => {
@@ -116,6 +90,7 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 key={item.to}
                 to={item.to}
                 title={collapsed ? t(item.labelKey) : undefined}
+                onClick={onNavigate}
               >
                 {({ isActive }) => (
                   <div
@@ -127,15 +102,15 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
                               : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text)]'
                           }`
                         : isActive
-                          ? 'rounded-2xl bg-gradient-to-r from-[var(--color-primary-pale)] via-[var(--color-surface)] to-transparent text-[var(--color-primary)]'
-                          : 'rounded-2xl text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text)]'
+                          ? 'rounded-[22px] border border-[var(--color-primary)]/10 bg-gradient-to-r from-[var(--color-primary-pale)] via-white to-transparent text-[var(--color-primary)] shadow-[0_10px_24px_rgba(79,70,229,0.08)]'
+                          : 'rounded-[22px] border border-transparent text-[var(--color-text-muted)] hover:bg-white/75 hover:text-[var(--color-text)]'
                     }`}
                   >
                     {isActive && !collapsed && (
                       <span className="absolute left-0 top-1/2 h-6 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-primary)]" />
                     )}
 
-                    <div className={`flex w-full items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-4 py-2.5'}`}>
+                    <div className={`flex w-full items-center ${collapsed ? 'justify-center px-0' : 'gap-3 px-4 py-3'}`}>
                       <Icon
                         className={`shrink-0 text-xl transition-all duration-200 ${
                           collapsed
@@ -145,7 +120,9 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
                             : 'group-hover:scale-110'
                         }`}
                       />
-                      {!collapsed && <span>{t(item.labelKey)}</span>}
+                      {!collapsed && (
+                        <span className="truncate text-[15px] font-semibold">{t(item.labelKey)}</span>
+                      )}
                     </div>
                   </div>
                 )}
@@ -154,63 +131,6 @@ function Sidebar({ collapsed, onToggle }: SidebarProps) {
           })}
         </div>
       </nav>
-
-      <div
-        className={`relative mt-5 overflow-hidden border border-[var(--color-border)]/80 bg-gradient-to-br from-[var(--color-surface-soft)] to-[var(--color-surface)] ${
-          collapsed ? 'w-full rounded-[28px] p-2.5' : 'rounded-[24px] p-4'
-        }`}
-      >
-        {!collapsed && (
-          <img
-            src={budgetIcon}
-            alt=""
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-5 -top-5 h-20 w-20 rotate-12 object-contain opacity-10"
-          />
-        )}
-
-        <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-          {user?.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt={user.full_name}
-              className={`${collapsed ? 'h-11 w-11 rounded-[18px]' : 'h-12 w-12 rounded-2xl'} object-cover ring-2 ring-[var(--color-primary)]/10`}
-            />
-          ) : (
-            <div className={`${collapsed ? 'h-11 w-11 rounded-[18px]' : 'h-12 w-12 rounded-2xl'} flex items-center justify-center bg-gradient-to-br from-[var(--color-primary-pale)] to-[var(--color-surface)] text-lg font-bold text-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/10`}>
-              {userInitial}
-            </div>
-          )}
-
-          {!collapsed && (
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-[var(--color-text)]">
-                {user?.full_name ?? t('guest')}
-              </p>
-              <p className="truncate text-xs text-[var(--color-text-muted)]">
-                {user?.email ?? t('no_email')}
-              </p>
-              <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--color-primary)]">
-                {formatUserRole(user?.role)}
-              </p>
-            </div>
-          )}
-        </div>
-
-        <button
-          type="button"
-          onClick={logout}
-          title={collapsed ? t('logout') : undefined}
-          className={`mt-4 flex items-center rounded-[20px] text-sm font-bold text-white shadow-sm transition-all duration-200 hover:opacity-92 active:scale-[0.97] ${
-            collapsed
-              ? 'mx-auto h-12 w-12 justify-center bg-gradient-to-br from-[var(--color-primary)] to-[var(--color-primary-soft)] shadow-[0_18px_30px_rgba(79,70,229,0.28)]'
-              : 'w-full justify-center gap-2 bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-primary-soft)] px-4 py-3'
-          }`}
-        >
-          <HiOutlineArrowLeftOnRectangle className="text-lg" />
-          {!collapsed && <span>{t('logout')}</span>}
-        </button>
-      </div>
     </aside>
   )
 }

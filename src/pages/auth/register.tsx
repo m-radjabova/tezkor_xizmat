@@ -71,7 +71,7 @@ function RegisterPage() {
             <input
               type="email"
               {...register('email')}
-              placeholder="you@example.com"
+              placeholder={t('auth.email_placeholder')}
               className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 outline-none transition focus:border-[var(--color-primary)] focus:bg-[var(--color-surface)]"
             />
             {errors.email && <p className="mt-2 text-sm text-[var(--color-danger)]">{errors.email.message}</p>}

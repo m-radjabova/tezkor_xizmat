@@ -38,26 +38,26 @@ function StatCard({ title, value, accent, icon: Icon }: StatCardProps) {
   const style = accentStyles[accent]
 
   return (
-    <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-soft)] transition-all duration-300 hover:shadow-[var(--shadow-card)]">
+    <div className="mobile-surface-card lift-hover group relative overflow-hidden rounded-[20px] p-4 hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)] sm:rounded-[28px] sm:p-6">
       {/* Animated gradient overlay */}
       <div
         className={`absolute inset-0 bg-gradient-to-br ${style.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
       />
 
-      <div className="relative flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+      <div className="relative flex items-start gap-3 sm:justify-between sm:gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)] sm:text-sm">
             {title}
           </p>
-          <p className="mt-3 text-3xl font-extrabold tracking-tight text-[var(--color-text)] transition-colors duration-200">
+          <p className="mt-2 text-2xl font-extrabold tracking-tight text-[var(--color-text)] transition-colors duration-200 sm:mt-3 sm:text-3xl">
             {value}
           </p>
         </div>
 
         <div
-          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${style.bg} ${style.color} ring-1 ${style.ring} transition-all duration-300 group-hover:scale-110 group-hover:shadow-lg`}
+          className={`mobile-icon-chip flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${style.bg} ${style.color} ring-1 ${style.ring} transition-all duration-300 group-hover:scale-[1.08] sm:h-14 sm:w-14`}
         >
-          <Icon className="text-2xl" />
+          <Icon className="text-xl sm:text-2xl" />
         </div>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -94,9 +94,9 @@ function DebtsPage() {
   })
   const {
     register,
+    control,
     handleSubmit,
     reset,
-    watch,
     formState: { errors },
   } = useForm<DebtFormValues>({
     resolver: zodResolver(debtSchema),
@@ -109,8 +109,8 @@ function DebtsPage() {
     },
   })
 
-  const watchedTotal = watch('total_amount')
-  const watchedPaid = watch('paid_amount')
+  const watchedTotal = useWatch({ control, name: 'total_amount' })
+  const watchedPaid = useWatch({ control, name: 'paid_amount' })
 
   const liveProgress = useMemo(() => {
     if (watchedTotal > 0) {
@@ -164,14 +164,28 @@ function DebtsPage() {
   }
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       
 
       {/* Summary cards */}
       {isLoading ? (
         <SummarySkeleton />
       ) : debts.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <>
+          <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 md:hidden">
+            {[
+              { label: t('page.debts.total_debt'), value: formatCurrency(totalDebt), tone: 'text-[var(--color-danger)]' },
+              { label: t('common.active'), value: String(activeDebts), tone: 'text-[var(--color-warning)]' },
+              { label: t('page.debts.paid_off'), value: String(paidDebts), tone: 'text-[var(--color-success)]' },
+            ].map((item, index, list) => (
+              <div key={item.label} className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}>
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{item.label}</p>
+                <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-3">
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-danger)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
             <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.debts.total_debt')}</p>
@@ -204,10 +218,11 @@ function DebtsPage() {
               {paidDebts}
             </p>
           </div>
-        </div>
+          </div>
+        </>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+      <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
         {/* ───── Form ───── */}
         <PageSection title={t('page.debts.form_title')} subtitle={t('page.debts.form_subtitle')}>
           {isLoading ? (
@@ -358,7 +373,7 @@ function DebtsPage() {
         {/* ───── Debt List ───── */}
         <PageSection title={t('page.debts.list_title')} subtitle={t('page.debts.list_subtitle')}>
           {isLoading ? (
-            <div className="mt-5 grid gap-4 xl:grid-cols-2">
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
               {[1, 2, 3, 4].map((i) => (
                 <DebtSkeleton key={i} />
               ))}
@@ -374,16 +389,16 @@ function DebtsPage() {
           ) : (
             <>
               {/* Summary bar */}
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+              <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                   {debts.length} {debts.length === 1 ? t('page.debts.debt_singular') : t('page.debts.debt_plural')}
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineBanknotes className="text-sm text-[var(--color-danger)]" />
                   <span className="text-[var(--color-danger)]">{formatCurrency(totalDebt)} {t('common.total')}</span>
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineCheckCircle className="text-sm text-[var(--color-success)]" />
                   <span className="text-[var(--color-success)]">{paidDebts} {t('common.paid')}</span>
@@ -391,7 +406,7 @@ function DebtsPage() {
               </div>
 
               {/* Debt grid */}
-              <div className="grid gap-4 xl:grid-cols-2">
+              <div className="grid gap-3 sm:gap-4 lg:grid-cols-2">
                 {debts.map((debt, index) => {
                   const total = Number(debt.total_amount)
                   const paid = Number(debt.paid_amount)
@@ -403,7 +418,7 @@ function DebtsPage() {
                   return (
                     <div
                       key={debt.id}
-                      className={`group relative overflow-hidden rounded-[24px] border p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] ${
+                      className={`group relative overflow-hidden rounded-[26px] border p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] sm:p-5 ${
                         isPaid
                           ? 'border-[var(--color-success)]/50 bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-success-soft)]'
                           : overdue
@@ -440,7 +455,7 @@ function DebtsPage() {
                         </div>
                       )}
 
-                      <div className="relative flex items-start justify-between gap-4">
+                      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                         {/* Left */}
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-3">
@@ -464,7 +479,7 @@ function DebtsPage() {
                               />
                             </div>
                             <div className="min-w-0">
-                              <p className="truncate text-lg font-bold text-[var(--color-text)]">
+                              <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
                                 {debt.title}
                               </p>
                               <p className="text-sm text-[var(--color-text-muted)]">
@@ -538,7 +553,7 @@ function DebtsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex shrink-0 gap-1.5">
+                        <div className="flex shrink-0 gap-1.5 xl:flex-col">
                           <button
                             type="button"
                             disabled={isUpdating}

@@ -167,37 +167,69 @@ function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
-     
-
-      {/* Summary cards */}
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       {!isLoading && visibleTransactions.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <p className="text-sm font-semibold text-[var(--color-text-muted)]">{t('page.transactions.total_income')}</p>
-            <p className="mt-2 text-2xl font-extrabold text-[var(--color-success)]">{formatCurrency(totalIncome)}</p>
+        <>
+          <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 sm:hidden">
+            {[
+              {
+                label: t('page.transactions.total_income'),
+                value: formatCurrency(totalIncome),
+                tone: 'text-[var(--color-success)]',
+              },
+              {
+                label: t('page.transactions.total_expenses'),
+                value: formatCurrency(totalExpense),
+                tone: 'text-[var(--color-danger)]',
+              },
+              {
+                label: t('page.transactions.balance'),
+                value: `${balance >= 0 ? '+' : ''}${formatCurrency(balance)}`,
+                tone: balance >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]',
+              },
+            ].map((item, index, list) => (
+              <div
+                key={item.label}
+                className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}
+              >
+                <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
+                  {item.label}
+                </p>
+                <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+              </div>
+            ))}
           </div>
-          <div className="rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <p className="text-sm font-semibold text-[var(--color-text-muted)]">{t('page.transactions.total_expenses')}</p>
-            <p className="mt-2 text-2xl font-extrabold text-[var(--color-danger)]">{formatCurrency(totalExpense)}</p>
+
+          <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-3">
+            <div className="rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <p className="text-sm font-semibold text-[var(--color-text-muted)]">{t('page.transactions.total_income')}</p>
+              <p className="mt-2 text-2xl font-extrabold text-[var(--color-success)]">{formatCurrency(totalIncome)}</p>
+            </div>
+            <div className="rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <p className="text-sm font-semibold text-[var(--color-text-muted)]">{t('page.transactions.total_expenses')}</p>
+              <p className="mt-2 text-2xl font-extrabold text-[var(--color-danger)]">{formatCurrency(totalExpense)}</p>
+            </div>
+            <div className="rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <p className="text-sm font-semibold text-[var(--color-text-muted)]">{t('page.transactions.balance')}</p>
+              <p
+                className={`mt-2 text-2xl font-extrabold ${
+                  balance >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'
+                }`}
+              >
+                {balance >= 0 ? '+' : ''}
+                {formatCurrency(balance)}
+              </p>
+            </div>
           </div>
-          <div className="rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
-            <p className="text-sm font-semibold text-[var(--color-text-muted)]">{t('page.transactions.balance')}</p>
-            <p
-              className={`mt-2 text-2xl font-extrabold ${
-                balance >= 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'
-              }`}
-            >
-              {balance >= 0 ? '+' : ''}
-              {formatCurrency(balance)}
-            </p>
-          </div>
-        </div>
+        </>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        {/* ───── Form ───── */}
-        <PageSection title={t('page.transactions.form_title')} subtitle={t('page.transactions.form_subtitle')}>
+      <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
+        <PageSection
+          title={t('page.transactions.form_title')}
+          subtitle={t('page.transactions.form_subtitle')}
+          className="xl:sticky xl:top-28 xl:order-1 order-2"
+        >
           {isLoading ? (
             <FormSkeleton />
           ) : (
@@ -242,7 +274,7 @@ function TransactionsPage() {
               </div>
 
               {/* Type + Category row */}
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {/* Type */}
                 <div className="relative">
                   <select
@@ -364,7 +396,11 @@ function TransactionsPage() {
         </PageSection>
 
         {/* ───── Transaction List ───── */}
-        <PageSection title={t('page.transactions.list_title')} subtitle={t('page.transactions.list_subtitle')}>
+        <PageSection
+          title={t('page.transactions.list_title')}
+          subtitle={t('page.transactions.list_subtitle')}
+          className="order-1 xl:order-2"
+        >
           {isLoading ? (
             <div className="mt-5 space-y-4">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -382,11 +418,11 @@ function TransactionsPage() {
           ) : (
             <>
               {/* Summary bar */}
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+              <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                   {visibleTransactions.length} {visibleTransactions.length === 1 ? t('page.transactions.transaction_singular') : t('page.transactions.transaction_plural')}
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <span className="inline-block h-2.5 w-2.5 rounded-full bg-[var(--color-success)]" />
                   <span className="text-[var(--color-success)]">
@@ -402,13 +438,13 @@ function TransactionsPage() {
               </div>
 
               {/* Transaction list */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {visibleTransactions.map((transaction, index) => {
                   const categoryColor = categoryColorMap.get(transaction.category_id ?? '') ?? '#e5a4b8'
                   return (
                     <div
                       key={transaction.id}
-                      className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70"
+                      className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70 sm:p-5"
                       style={{ animationDelay: `${index * 60}ms` }}
                     >
                       {/* Gradient accent */}
@@ -420,9 +456,7 @@ function TransactionsPage() {
                       />
 
                       <div className="relative flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                        {/* Left content */}
                         <div className="min-w-0 flex-1">
-                          {/* Title row */}
                           <div className="flex items-center gap-3">
                             <span
                               className="relative inline-block h-3 w-3 rounded-full shadow-sm ring-2 ring-white/60 shrink-0"
@@ -433,7 +467,7 @@ function TransactionsPage() {
                                 style={{ backgroundColor: categoryColor }}
                               />
                             </span>
-                            <p className="truncate text-lg font-bold text-[var(--color-text)]">
+                            <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
                               {transaction.title}
                             </p>
                             <span
@@ -447,7 +481,6 @@ function TransactionsPage() {
                             </span>
                           </div>
 
-                          {/* Category + Amount */}
                           <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
                             <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-surface-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)]">
                               {categoryMap.get(transaction.category_id ?? '') ?? t('common.no_category')}
@@ -465,14 +498,12 @@ function TransactionsPage() {
                             </span>
                           </div>
 
-                          {/* Description */}
                           {transaction.description && (
                             <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
                               {transaction.description}
                             </p>
                           )}
 
-                          {/* Tags */}
                           {transaction.tags.length > 0 && (
                             <div className="mt-3 flex flex-wrap gap-1.5">
                               {transaction.tags.map((tag) => (
@@ -487,15 +518,13 @@ function TransactionsPage() {
                             </div>
                           )}
 
-                          {/* Date */}
                           <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)]">
                             <HiOutlineCalendarDays className="text-sm" />
                             {formatShortDate(transaction.transaction_date)}
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="flex shrink-0 gap-1.5">
+                        <div className="flex shrink-0 justify-end gap-1.5">
                           <button
                             type="button"
                             disabled={isUpdating}

@@ -124,14 +124,24 @@ function NotesPage() {
   }
 
   return (
-    <div className="space-y-6 p-3 md:p-5">
-     
-
-      {/* Summary cards */}
+    <div className="mobile-page space-y-4 p-2 sm:space-y-5 sm:p-3 md:space-y-6 md:p-6 lg:p-8">
       {isLoading ? (
         <SummarySkeleton />
       ) : notes.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-3">
+        <>
+        <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 sm:hidden">
+          {[
+            { label: t('page.notes.total_notes'), value: String(totalNotes), tone: 'text-[var(--color-primary)]' },
+            { label: t('page.notes.with_content'), value: `${notesWithContent} / ${totalNotes}`, tone: 'text-[var(--color-success)]' },
+            { label: t('page.notes.with_date'), value: String(notesWithDate), tone: 'text-[var(--color-purple)]' },
+          ].map((item, index, list) => (
+            <div key={item.label} className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}>
+              <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{item.label}</p>
+              <p className={`mt-1 text-xl font-extrabold tracking-tight ${item.tone}`}>{item.value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-3">
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
             <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.notes.total_notes')}</p>
@@ -156,11 +166,11 @@ function NotesPage() {
             </p>
           </div>
         </div>
+        </>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        {/* ───── Form ───── */}
-        <PageSection title={t('page.notes.form_title')} subtitle={t('page.notes.form_subtitle')}>
+      <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
+        <PageSection title={t('page.notes.form_title')} subtitle={t('page.notes.form_subtitle')} className="order-2 xl:order-1 xl:sticky xl:top-28">
           {isLoading ? (
             <FormSkeleton />
           ) : (
@@ -256,8 +266,7 @@ function NotesPage() {
           )}
         </PageSection>
 
-        {/* ───── Notes List ───── */}
-        <PageSection title={t('notes')} subtitle={t('page.notes.list_subtitle')}>
+        <PageSection title={t('notes')} subtitle={t('page.notes.list_subtitle')} className="order-1 xl:order-2">
           {isLoading ? (
             <div className="mt-5 space-y-4">
               {[1, 2, 3, 4].map((i) => (
@@ -275,16 +284,16 @@ function NotesPage() {
           ) : (
             <>
               {/* Summary bar */}
-              <div className="mb-5 flex flex-wrap items-center gap-3 rounded-2xl bg-[var(--color-surface-soft)] px-4 py-3">
+              <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
                 <span className="text-sm font-semibold text-[var(--color-text-muted)]">
                   {notes.length} {notes.length === 1 ? t('page.notes.note_singular') : t('page.notes.note_plural')}
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineDocumentText className="text-sm text-[var(--color-primary)]" />
                   <span className="text-[var(--color-primary)]">{notesWithContent} {t('page.notes.with_content_lc')}</span>
                 </span>
-                <span className="h-3 w-px bg-[var(--color-border)]" />
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineCalendarDays className="text-sm text-[var(--color-purple)]" />
                   <span className="text-[var(--color-purple)]">{notesWithDate} {t('page.notes.dated')}</span>
@@ -292,7 +301,7 @@ function NotesPage() {
               </div>
 
               {/* Notes list */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {notes.map((note, index) => {
                   const hasContent = note.content && note.content.trim().length > 0
                   const hasDate = !!note.note_date
@@ -300,7 +309,7 @@ function NotesPage() {
                   return (
                     <div
                       key={note.id}
-                      className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-5 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70"
+                      className="group relative overflow-hidden rounded-[24px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-4 shadow-sm transition-all duration-300 hover:shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)]/70 sm:p-5"
                       style={{ animationDelay: `${index * 60}ms` }}
                     >
                       {/* Gradient accent */}
@@ -332,10 +341,10 @@ function NotesPage() {
                               />
                             </div>
                             <div className="min-w-0">
-                              <p className="truncate text-lg font-bold text-[var(--color-text)]">
+                              <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
                                 {note.title}
                               </p>
-                              <div className="flex items-center gap-2">
+                              <div className="flex flex-wrap items-center gap-2">
                                 {hasContent && (
                                   <span className="inline-flex items-center gap-1 text-xs font-medium text-[var(--color-success)]">
                                     <HiOutlineCheckCircle className="text-xs" />
@@ -388,7 +397,7 @@ function NotesPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex shrink-0 items-center gap-2">
+                        <div className="flex shrink-0 justify-end gap-2">
                           <button
                             type="button"
                             disabled={isUpdating}
