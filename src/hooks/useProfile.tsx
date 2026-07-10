@@ -9,6 +9,11 @@ interface UpdateMeOptions {
   silent?: boolean
 }
 
+interface ChangePasswordPayload {
+  current_password: string
+  new_password: string
+}
+
 async function updateMeRequest(payload: UserUpdatePayload) {
   const { data } = await apiClient.patch<User>('/users/me', payload)
   return data
@@ -29,6 +34,11 @@ async function uploadAvatarRequest(file: File) {
 
 async function deleteAvatarRequest() {
   const { data } = await apiClient.delete<User>('/users/me/avatar')
+  return data
+}
+
+async function changePasswordRequest(payload: ChangePasswordPayload) {
+  const { data } = await apiClient.post<{ message: string }>('/auth/change-password', payload)
   return data
 }
 
@@ -60,6 +70,16 @@ export function useProfile() {
     },
   })
 
+  const changePasswordMutation = useMutation({
+    mutationFn: changePasswordRequest,
+    onSuccess: () => {
+      showSuccessToast(translate('toast.password_changed'))
+    },
+    onError: (error) => {
+      showErrorToast(getErrorMessage(error, translate('toast.password_change_failed')))
+    },
+  })
+
   return {
     updateMe: async (payload: UserUpdatePayload, options?: UpdateMeOptions) => {
       const updatedUser = await updateMeMutation.mutateAsync(payload)
@@ -72,8 +92,10 @@ export function useProfile() {
     },
     uploadAvatar: uploadAvatarMutation.mutateAsync,
     deleteAvatar: deleteAvatarMutation.mutateAsync,
+    changePassword: async (payload: ChangePasswordPayload) => changePasswordMutation.mutateAsync(payload),
     isUpdating: updateMeMutation.isPending,
     isUploadingAvatar: uploadAvatarMutation.isPending,
     isDeletingAvatar: deleteAvatarMutation.isPending,
+    isChangingPassword: changePasswordMutation.isPending,
   }
 }
