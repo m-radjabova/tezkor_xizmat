@@ -30,7 +30,6 @@ const routeMeta: Record<string, HeaderMeta> = {
     eyebrow: 'header.money_flow',
     subtitle: 'header.transactions_subtitle',
     showFilter: true,
-    showSearch: true,
     actionLabel: 'header.add_transaction',
   },
   '/analytics': {
@@ -38,7 +37,6 @@ const routeMeta: Record<string, HeaderMeta> = {
     eyebrow: 'header.insights',
     subtitle: 'header.analytics_subtitle',
     showFilter: true,
-    showSearch: true,
   },
   '/categories': {
     title: 'categories',

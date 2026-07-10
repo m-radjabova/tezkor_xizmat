@@ -5,6 +5,8 @@ import IsLoading from './components/isLoading'
 import { useAuth } from './hooks/useAuth'
 import AuthLayout from './layout/AuthLayout'
 import MainLayout from './layout/MainLayout'
+import ScrollToTop from './components/ScrollToTop'
+import NotFoundPage from './components/NotFoundPage'
 
 const LoginPage = lazy(() => import('./pages/auth/login'))
 const RegisterPage = lazy(() => import('./pages/auth/register'))
@@ -34,6 +36,8 @@ function HomeRedirect() {
 
 function App() {
   return (
+   <>
+   <ScrollToTop />
     <Suspense fallback={<IsLoading />}>
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
@@ -65,9 +69,10 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
+   </>
   )
 }
 

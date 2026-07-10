@@ -3,6 +3,7 @@ import { PreferencesContext, type AppCurrency, type AppLanguage, type DateFilter
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { getTranslations } from '../utils/i18n'
+import { setFormatCurrencyPreference } from '../utils/format'
 import { getStoredLanguage, getStoredThemeMode, saveLanguage, saveThemeMode } from '../utils/storage'
 
 interface PreferencesProviderProps {
@@ -90,6 +91,10 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => getStoredThemeMode() ?? 'light')
   const language = languageOverride ?? 'en'
   const currency = (user?.currency as AppCurrency | undefined) ?? 'USD'
+
+  useEffect(() => {
+    setFormatCurrencyPreference(currency)
+  }, [currency])
 
   useEffect(() => {
     Object.entries(themeModePalettes[themeMode]).forEach(([key, value]) => {

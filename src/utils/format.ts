@@ -1,4 +1,4 @@
-import { getStoredLanguage, getStoredUser } from './storage'
+import { getStoredLanguage } from './storage'
 import { translate } from './i18n'
 
 const currencyMap = {
@@ -17,6 +17,8 @@ const localeMap = {
 type CurrencyCode = keyof typeof currencyMap
 type LanguageCode = keyof typeof localeMap
 
+let activeCurrency: CurrencyCode = 'USD'
+
 function getSafeCurrency(currency?: string | null): CurrencyCode {
   if (currency && currency in currencyMap) {
     return currency as CurrencyCode
@@ -33,9 +35,12 @@ function getSafeLanguage(language?: string | null): LanguageCode {
   return 'en'
 }
 
+export function setFormatCurrencyPreference(currency?: string | null) {
+  activeCurrency = getSafeCurrency(currency)
+}
+
 export function formatCurrency(value: number | string | null | undefined) {
-  const user = getStoredUser()
-  const currencyCode = getSafeCurrency(user?.currency)
+  const currencyCode = activeCurrency
   const selectedCurrency = currencyMap[currencyCode]
 
   const amount = Number(value) || 0
@@ -56,6 +61,28 @@ export function formatCurrency(value: number | string | null | undefined) {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   }).format(convertedAmount)
+}
+
+export function formatCompactCurrency(value: number | string | null | undefined) {
+  const currencyCode = activeCurrency
+  const selectedCurrency = currencyMap[currencyCode]
+  const amount = (Number(value) || 0) * selectedCurrency.rate
+
+  if (currencyCode === 'UZS') {
+    const compact = new Intl.NumberFormat(selectedCurrency.locale, {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(amount)
+
+    return `${compact} so'm`
+  }
+
+  return new Intl.NumberFormat(selectedCurrency.locale, {
+    style: 'currency',
+    currency: selectedCurrency.currency,
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(amount)
 }
 
 export function formatShortDate(value?: string | null) {

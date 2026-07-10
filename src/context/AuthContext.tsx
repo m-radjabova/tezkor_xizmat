@@ -4,28 +4,23 @@ import { AuthContext } from './auth-context'
 import type { AuthTokens, LoginPayload, RegisterPayload, User } from '../types'
 import { showInfoToast, showSuccessToast } from '../utils/toast'
 import { translate } from '../utils/i18n'
-import { clearAuthStorage, getAccessToken, getRefreshToken, getStoredUser, saveTokens, saveUser } from '../utils/storage'
+import { clearAuthStorage, clearStoredUser, getAccessToken, getRefreshToken, saveTokens } from '../utils/storage'
 
 interface AuthProviderProps {
   children: ReactNode
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(getStoredUser())
+  const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   const setCurrentUser = (nextUser: User | null) => {
     setUser(nextUser)
-
-    if (nextUser) {
-      saveUser(nextUser)
-    }
   }
 
   const fetchMe = async () => {
     const { data } = await apiClient.get<User>('/auth/me')
     setUser(data)
-    saveUser(data)
     return data
   }
 
@@ -69,6 +64,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const initializeAuth = async () => {
       try {
+        clearStoredUser()
         const accessToken = getAccessToken()
         const refreshToken = getRefreshToken()
 
@@ -76,7 +72,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const { data } = await apiClient.get<User>('/auth/me')
           if (!isMounted) return
           setUser(data)
-          saveUser(data)
         } else if (refreshToken) {
           const { data } = await apiClient.post<AuthTokens>('/auth/refresh', {
             refresh_token: refreshToken,
@@ -87,7 +82,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
           const meResponse = await apiClient.get<User>('/auth/me')
           if (!isMounted) return
           setUser(meResponse.data)
-          saveUser(meResponse.data)
         } else if (isMounted) {
           setUser(null)
         }

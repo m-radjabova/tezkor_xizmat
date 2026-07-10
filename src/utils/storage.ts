@@ -1,4 +1,4 @@
-import type { AuthTokens, User } from '../types'
+import type { AuthTokens } from '../types'
 import type { AppLanguage, ThemeMode } from '../context/preferences-context'
 
 const ACCESS_TOKEN_KEY = 'budget_planner_access_token'
@@ -10,10 +10,7 @@ const THEME_MODE_KEY = 'budget_planner_theme_mode'
 export function saveTokens(tokens: AuthTokens) {
   localStorage.setItem(ACCESS_TOKEN_KEY, tokens.access_token)
   localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token)
-}
-
-export function saveUser(user: User) {
-  localStorage.setItem(USER_KEY, JSON.stringify(user))
+  localStorage.removeItem(USER_KEY)
 }
 
 export function getAccessToken() {
@@ -24,9 +21,8 @@ export function getRefreshToken() {
   return localStorage.getItem(REFRESH_TOKEN_KEY)
 }
 
-export function getStoredUser(): User | null {
-  const rawUser = localStorage.getItem(USER_KEY)
-  return rawUser ? (JSON.parse(rawUser) as User) : null
+export function clearStoredUser() {
+  localStorage.removeItem(USER_KEY)
 }
 
 export function clearAuthStorage() {

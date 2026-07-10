@@ -15,7 +15,7 @@ function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
 
   return (
     <aside
-      className={`relative flex h-full w-full flex-col overflow-hidden border-r border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] py-4 shadow-[0_24px_50px_rgba(15,23,42,0.14)] backdrop-blur-3xl transition-all duration-300 lg:h-[100dvh] ${
+      className={`relative flex h-full w-full flex-col overflow-hidden border-r border-[var(--color-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--color-surface-strong)_96%,transparent),color-mix(in_srgb,var(--color-surface-soft)_92%,transparent))] py-4 shadow-[var(--shadow-card)] backdrop-blur-3xl transition-all duration-300 lg:h-[100dvh] ${
         collapsed ? 'items-center px-2.5' : 'px-3 sm:px-4'
       }`}
     >
@@ -23,7 +23,7 @@ function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
       <button
         type="button"
         onClick={onToggle}
-        className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-2xl border border-white/70 bg-[var(--color-surface)] text-[var(--color-text-muted)] shadow-[0_10px_24px_rgba(15,23,42,0.08)] transition-colors hover:text-[var(--color-text)] lg:hidden"
+        className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] shadow-[var(--shadow-soft)] transition-colors hover:text-[var(--color-text)] lg:hidden"
         aria-label={t('accessibility.close_sidebar')}
       >
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,12 +98,12 @@ function Sidebar({ collapsed, onToggle, onNavigate }: SidebarProps) {
                       collapsed
                         ? `justify-center rounded-[20px] py-3 ${
                             isActive
-                              ? 'bg-gradient-to-br from-[var(--color-primary-pale)] via-[var(--color-surface)] to-[var(--color-surface-soft)] text-[var(--color-primary)] shadow-[0_14px_30px_rgba(79,70,229,0.14)]'
+                              ? 'bg-gradient-to-br from-[var(--color-primary-pale)] via-[var(--color-surface)] to-[var(--color-surface-soft)] text-[var(--color-primary)] shadow-[var(--shadow-soft)]'
                               : 'text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text)]'
                           }`
                         : isActive
-                          ? 'rounded-[22px] border border-[var(--color-primary)]/10 bg-gradient-to-r from-[var(--color-primary-pale)] via-white to-transparent text-[var(--color-primary)] shadow-[0_10px_24px_rgba(79,70,229,0.08)]'
-                          : 'rounded-[22px] border border-transparent text-[var(--color-text-muted)] hover:bg-white/75 hover:text-[var(--color-text)]'
+                          ? 'rounded-[22px] border border-[var(--color-primary)]/20 bg-gradient-to-r from-[var(--color-primary-pale)] via-[var(--color-surface)] to-transparent text-[var(--color-primary)] shadow-[var(--shadow-soft)]'
+                          : 'rounded-[22px] border border-transparent text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-text)]'
                     }`}
                   >
                     {isActive && !collapsed && (

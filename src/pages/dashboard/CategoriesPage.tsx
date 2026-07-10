@@ -1,3 +1,4 @@
+import { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -7,6 +8,7 @@ import EmptyState from '../../components/EmptyState'
 import PageSection from '../../components/PageSection'
 import { useCategories } from '../../hooks/useCategories'
 import { usePreferences } from '../../hooks/usePreferences'
+import type { Category } from '../../types'
 
 type CategoryFormValues = {
   name: string
@@ -56,6 +58,8 @@ function FormSkeleton() {
 function CategoriesPage() {
   const { t } = usePreferences()
   const { categories, isLoading, createCategory, updateCategory, deleteCategory, isCreating, isUpdating, isDeleting } = useCategories()
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
   const categorySchema = z.object({
     name: z.string().min(2, t('page.categories.validation.name')),
     icon: z.string().min(2, t('page.categories.validation.icon')),
@@ -82,9 +86,40 @@ function CategoriesPage() {
   const selectedColor = watch('color')
   const selectedType = watch('type')
 
+  const resetForm = () => {
+    setEditingCategory(null)
+    reset({
+      name: '',
+      icon: 'wallet',
+      color: '#e5a4b8',
+      type: 'expense',
+    })
+  }
+
+  const openEdit = (category: Category) => {
+    setEditingCategory(category)
+    reset({
+      name: category.name,
+      icon: category.icon || 'wallet',
+      color: category.color || '#e5a4b8',
+      type: category.type,
+    })
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
   const onSubmit = (values: CategoryFormValues) => {
-    createCategory(values)
-    reset()
+    if (editingCategory) {
+      updateCategory(
+        {
+          id: editingCategory.id,
+          payload: values,
+        },
+        { onSuccess: resetForm },
+      )
+      return
+    }
+
+    createCategory(values, { onSuccess: resetForm })
   }
 
   return (
@@ -92,11 +127,11 @@ function CategoriesPage() {
 
       <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
         {/* ───── Form ───── */}
-        <PageSection title={t('page.categories.form_title')} subtitle={t('page.categories.form_subtitle')}>
+        <PageSection title={editingCategory ? `${t('common.edit')} ${editingCategory.name}` : t('page.categories.form_title')} subtitle={t('page.categories.form_subtitle')}>
           {isLoading ? (
             <FormSkeleton />
           ) : (
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <form ref={formRef} className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
               {/* Name */}
               <div className="group relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -212,22 +247,31 @@ function CategoriesPage() {
               </div>
 
               {/* Submit */}
+              {editingCategory && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-bold text-[var(--color-text-muted)] transition-all hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-soft)]"
+                >
+                  {t('cancel')}
+                </button>
+              )}
               <button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || isUpdating}
                 className="group cursor-pointer relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[var(--color-primary)] px-4 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:bg-[var(--color-primary-soft)] hover:shadow-lg hover:shadow-[var(--color-primary)]/20 disabled:opacity-70 disabled:hover:shadow-none"
               >
                 {/* Shine effect */}
                 <span className="absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <HiOutlineFolderPlus className="relative text-lg" />
                 <span className="relative">
-                  {isCreating ? (
+                  {isCreating || isUpdating ? (
                     <span className="flex items-center gap-2">
                       <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       {t('common.saving')}
                     </span>
                   ) : (
-                    t('page.categories.add')
+                    editingCategory ? t('common.save_changes') : t('page.categories.add')
                   )}
                 </span>
               </button>
@@ -340,15 +384,7 @@ function CategoriesPage() {
                         <button
                           type="button"
                           disabled={isUpdating}
-                          onClick={() =>
-                            updateCategory({
-                              id: category.id,
-                              payload: {
-                                color:
-                                  category.color === '#e5a4b8' ? '#79c49f' : '#e5a4b8',
-                              },
-                            })
-                          }
+                          onClick={() => openEdit(category)}
                           className="flex h-[42px] w-[42px] items-center justify-center rounded-2xl border border-[var(--color-border)]/70 bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-all duration-200 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-pale)] hover:text-[var(--color-primary)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--color-border)]/70 disabled:hover:bg-transparent disabled:hover:text-[var(--color-text-muted)]"
                         >
                           <HiOutlinePencilSquare className="text-lg" />

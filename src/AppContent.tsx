@@ -19,9 +19,6 @@ function AppContent() {
         pauseOnHover
         draggable
         theme={themeMode === 'dark' ? 'dark' : 'light'}
-        toastClassName={() =>
-          'rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] shadow-[var(--shadow-card)]'
-        }
       />
     </>
   )

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -18,6 +18,7 @@ import PageSection from '../../components/PageSection'
 import { useNotes } from '../../hooks/useNotes'
 import { usePreferences } from '../../hooks/usePreferences'
 import { formatShortDate } from '../../utils/format'
+import type { Note } from '../../types'
 type NoteFormValues = {
   title: string
   content: string
@@ -81,6 +82,8 @@ function SummarySkeleton() {
 function NotesPage() {
   const { t } = usePreferences()
   const { notes, isLoading, createNote, updateNote, deleteNote, isCreating, isUpdating, isDeleting } = useNotes()
+  const [editingNote, setEditingNote] = useState<Note | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
   const noteSchema = z.object({
     title: z.string().min(2, t('page.notes.validation.title')),
     content: z.string(),
@@ -114,13 +117,45 @@ function NotesPage() {
     [notes],
   )
 
-  const onSubmit = (values: NoteFormValues) => {
-    createNote({
+  const resetForm = () => {
+    setEditingNote(null)
+    reset({
+      title: '',
+      content: '',
+      note_date: '',
+    })
+  }
+
+  const openEdit = (note: Note) => {
+    setEditingNote(note)
+    reset({
+      title: note.title,
+      content: note.content ?? '',
+      note_date: note.note_date ?? '',
+    })
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const toPayload = (values: NoteFormValues) => ({
       title: values.title,
       content: values.content,
       note_date: values.note_date || null,
-    })
-    reset()
+  })
+
+  const onSubmit = (values: NoteFormValues) => {
+    const payload = toPayload(values)
+    if (editingNote) {
+      updateNote(
+        {
+          id: editingNote.id,
+          payload,
+        },
+        { onSuccess: resetForm },
+      )
+      return
+    }
+
+    createNote(payload, { onSuccess: resetForm })
   }
 
   return (
@@ -170,11 +205,11 @@ function NotesPage() {
       ) : null}
 
       <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
-        <PageSection title={t('page.notes.form_title')} subtitle={t('page.notes.form_subtitle')} className="order-2 xl:order-1 xl:sticky xl:top-28">
+        <PageSection title={editingNote ? `${t('common.edit')} ${editingNote.title}` : t('page.notes.form_title')} subtitle={t('page.notes.form_subtitle')} className="order-2 xl:order-1 xl:sticky xl:top-28">
           {isLoading ? (
             <FormSkeleton />
           ) : (
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <form ref={formRef} className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
               {/* Title */}
               <div className="group relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -244,21 +279,30 @@ function NotesPage() {
               )}
 
               {/* Submit */}
+              {editingNote && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-bold text-[var(--color-text-muted)] transition-all hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-soft)]"
+                >
+                  {t('cancel')}
+                </button>
+              )}
               <button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || isUpdating}
                 className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[var(--color-primary)] px-4 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:bg-[var(--color-primary-soft)] hover:shadow-lg hover:shadow-[var(--color-primary)]/20 disabled:opacity-70 disabled:hover:shadow-none"
               >
                 <span className="absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <HiOutlineDocumentPlus className="relative text-lg" />
                 <span className="relative">
-                  {isCreating ? (
+                  {isCreating || isUpdating ? (
                     <span className="flex items-center gap-2">
                       <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       {t('common.saving')}
                     </span>
                   ) : (
-                    t('page.notes.add')
+                    editingNote ? t('common.save_changes') : t('page.notes.add')
                   )}
                 </span>
               </button>
@@ -401,12 +445,7 @@ function NotesPage() {
                           <button
                             type="button"
                             disabled={isUpdating}
-                            onClick={() =>
-                              updateNote({
-                                id: note.id,
-                                payload: { content: `${note.content || ''} (updated)` },
-                              })
-                            }
+                            onClick={() => openEdit(note)}
                             className="flex h-[42px] w-[42px] items-center justify-center rounded-2xl border border-[var(--color-border)]/70 bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-all duration-200 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-pale)] hover:text-[var(--color-primary)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <HiOutlinePencilSquare className="text-lg" />

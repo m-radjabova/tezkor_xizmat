@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -20,6 +20,7 @@ import { usePreferences } from '../../hooks/usePreferences'
 import { useTransactions } from '../../hooks/useTransactions'
 import { filterTransactions } from '../../utils/filters'
 import { formatCurrency, formatShortDate, toDateInputValue } from '../../utils/format'
+import type { TransactionItem } from '../../types'
 type TransactionFormValues = {
   title: string
   amount: number
@@ -75,6 +76,8 @@ function TransactionsPage() {
   const { categories } = useCategories()
   const { transactions, isLoading, createTransaction, updateTransaction, deleteTransaction, isCreating, isUpdating, isDeleting } = useTransactions()
   const { dateFilter, transactionSearch, t } = usePreferences()
+  const [editingTransaction, setEditingTransaction] = useState<TransactionItem | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
   const transactionSchema = z.object({
     title: z.string().min(2, t('page.transactions.validation.title')),
     amount: z.number().positive(t('page.transactions.validation.amount')),
@@ -142,8 +145,36 @@ function TransactionsPage() {
 
   const balance = totalIncome - totalExpense
 
-  const onSubmit = (values: TransactionFormValues) => {
-    createTransaction({
+  const defaultFormValues = (type: 'expense' | 'income' = 'expense', tagsInput = '#family, #work'): TransactionFormValues => ({
+    title: '',
+    amount: 0,
+    type,
+    category_id: '',
+    transaction_date: toDateInputValue(new Date().toISOString()),
+    description: '',
+    tagsInput,
+  })
+
+  const resetForm = (type: 'expense' | 'income' = selectedType, tagsInput = '#family, #work') => {
+    setEditingTransaction(null)
+    reset(defaultFormValues(type, tagsInput))
+  }
+
+  const openEdit = (transaction: TransactionItem) => {
+    setEditingTransaction(transaction)
+    reset({
+      title: transaction.title,
+      amount: Number(transaction.amount),
+      type: transaction.type,
+      category_id: transaction.category_id ?? '',
+      transaction_date: toDateInputValue(transaction.transaction_date),
+      description: transaction.description ?? '',
+      tagsInput: transaction.tags.join(', '),
+    })
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const toPayload = (values: TransactionFormValues) => ({
       title: values.title,
       amount: values.amount,
       type: values.type,
@@ -154,16 +185,22 @@ function TransactionsPage() {
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean),
-    })
-    reset({
-      title: '',
-      amount: 0,
-      type: values.type,
-      category_id: '',
-      transaction_date: toDateInputValue(new Date().toISOString()),
-      description: '',
-      tagsInput: values.tagsInput,
-    })
+  })
+
+  const onSubmit = (values: TransactionFormValues) => {
+    const payload = toPayload(values)
+    if (editingTransaction) {
+      updateTransaction(
+        {
+          id: editingTransaction.id,
+          payload,
+        },
+        { onSuccess: () => resetForm(values.type, values.tagsInput) },
+      )
+      return
+    }
+
+    createTransaction(payload, { onSuccess: () => resetForm(values.type, values.tagsInput) })
   }
 
   return (
@@ -226,14 +263,14 @@ function TransactionsPage() {
 
       <div className="grid items-start gap-4 sm:gap-6 xl:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
         <PageSection
-          title={t('page.transactions.form_title')}
+          title={editingTransaction ? `${t('common.edit')} ${editingTransaction.title}` : t('page.transactions.form_title')}
           subtitle={t('page.transactions.form_subtitle')}
           className="xl:sticky xl:top-28 xl:order-1 order-2"
         >
           {isLoading ? (
             <FormSkeleton />
           ) : (
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <form ref={formRef} className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
               {/* Title */}
               <div className="group relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -373,21 +410,30 @@ function TransactionsPage() {
               </div>
 
               {/* Submit */}
+              {editingTransaction && (
+                <button
+                  type="button"
+                  onClick={() => resetForm()}
+                  className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-bold text-[var(--color-text-muted)] transition-all hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-soft)]"
+                >
+                  {t('cancel')}
+                </button>
+              )}
               <button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || isUpdating}
                 className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[var(--color-primary)] px-4 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:bg-[var(--color-primary-soft)] hover:shadow-lg hover:shadow-[var(--color-primary)]/20 disabled:opacity-70 disabled:hover:shadow-none"
               >
                 <span className="absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <HiOutlineArrowsRightLeft className="relative text-lg" />
                 <span className="relative">
-                  {isCreating ? (
+                  {isCreating || isUpdating ? (
                     <span className="flex items-center gap-2">
                       <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       {t('common.saving')}
                     </span>
                   ) : (
-                    t('page.transactions.add')
+                    editingTransaction ? t('common.save_changes') : t('page.transactions.add')
                   )}
                 </span>
               </button>
@@ -528,14 +574,7 @@ function TransactionsPage() {
                           <button
                             type="button"
                             disabled={isUpdating}
-                            onClick={() =>
-                              updateTransaction({
-                                id: transaction.id,
-                                payload: {
-                                  description: `${transaction.description || ''} (updated)`,
-                                },
-                              })
-                            }
+                            onClick={() => openEdit(transaction)}
                             className="flex h-[42px] w-[42px] items-center justify-center rounded-2xl border border-[var(--color-border)]/70 bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-all duration-200 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary-pale)] hover:text-[var(--color-primary)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-[var(--color-border)]/70 disabled:hover:bg-transparent disabled:hover:text-[var(--color-text-muted)]"
                           >
                             <HiOutlinePencilSquare className="text-lg" />

@@ -26,6 +26,11 @@ async function deleteSavingsGoalRequest(id: string) {
   await apiClient.delete(`/savings-goals/${id}`)
 }
 
+async function addSavingsDepositRequest({ id, amount }: { id: string; amount: number }) {
+  const { data } = await apiClient.post<SavingsGoal>(`/savings-goals/${id}/deposits`, { amount })
+  return data
+}
+
 export function useSavingsGoals() {
   const queryClient = useQueryClient()
 
@@ -67,6 +72,15 @@ export function useSavingsGoals() {
     },
   })
 
+  const depositMutation = useMutation({
+    mutationFn: addSavingsDepositRequest,
+    onSuccess: () => {
+      showSuccessToast(translate('toast.savings_deposit_added'))
+      void queryClient.invalidateQueries({ queryKey: SAVINGS_GOALS_QUERY_KEY })
+    },
+    onError: (error) => showErrorToast(getErrorMessage(error, translate('toast.savings_deposit_failed'))),
+  })
+
   return {
     savingsGoals: goalsQuery.data ?? [],
     isLoading: goalsQuery.isLoading,
@@ -74,8 +88,10 @@ export function useSavingsGoals() {
     createSavingsGoal: createMutation.mutate,
     updateSavingsGoal: updateMutation.mutate,
     deleteSavingsGoal: deleteMutation.mutate,
+    addDeposit: depositMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isAddingDeposit: depositMutation.isPending,
   }
 }

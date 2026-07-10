@@ -9,6 +9,8 @@ import {
   HiOutlineCheckCircle,
   HiOutlineCurrencyDollar,
   HiOutlineEnvelope,
+  HiOutlineEye,
+  HiOutlineEyeSlash,
   HiOutlineGlobeAlt,
   HiOutlineIdentification,
   HiOutlineLockClosed,
@@ -257,6 +259,11 @@ function SettingsPage() {
   const [userQuery, setUserQuery] = useState('')
   const [uploadProgress, setUploadProgress] = useState(0)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  })
   
   const profileSchema = useMemo(
     () =>
@@ -306,6 +313,7 @@ function SettingsPage() {
     register: registerPassword,
     handleSubmit: handlePasswordSubmit,
     reset: resetPassword,
+    control: passwordControl,
     formState: { errors: passwordErrors },
   } = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
@@ -317,6 +325,14 @@ function SettingsPage() {
   })
 
   const nextRole = useWatch({ control: roleControl, name: 'nextRole' })
+  const newPassword = useWatch({ control: passwordControl, name: 'new_password' }) ?? ''
+  const passwordStrength = newPassword.length === 0 ? 0 : newPassword.length < 8 ? 1 : newPassword.length < 12 ? 2 : 3
+
+  const closePasswordForm = () => {
+    setShowPasswordForm(false)
+    setVisiblePasswords({ current: false, next: false, confirm: false })
+    resetPassword()
+  }
 
   useEffect(() => {
     resetProfile({
@@ -341,12 +357,7 @@ function SettingsPage() {
       current_password: values.current_password,
       new_password: values.new_password,
     })
-    resetPassword({
-      current_password: '',
-      new_password: '',
-      confirm_new_password: '',
-    })
-    setShowPasswordForm(false)
+    closePasswordForm()
   }
 
   const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -386,21 +397,24 @@ function SettingsPage() {
   const adminCount = useMemo(() => users.filter((item) => item.role === 'admin').length, [users])
 
   return (
-    <div className="min-h-screen bg-[var(--color-surface)] p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen  p-4 sm:p-6 md:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Header */}
         <div className="flex justify-end">
-          
-          <button
-            onClick={() => {
+          <ConfirmActionButton
+            icon={HiOutlineArrowRightOnRectangle}
+            label={t('logout')}
+            confirmTitle={t('page.settings.logout_title')}
+            confirmText={t('page.settings.logout_text')}
+            onConfirm={() => {
               logout()
               navigate('/login', { replace: true })
             }}
-            className="inline-flex items-center gap-2 rounded-2xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/30 transition-all duration-300 hover:bg-red-600 hover:shadow-xl hover:shadow-red-500/40 hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2 rounded-2xl bg-red-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-red-500/30 hover:bg-red-600 hover:shadow-xl hover:shadow-red-500/40 hover:scale-105"
           >
             <HiOutlineArrowRightOnRectangle className="text-lg" />
-            {t('logout')}
-          </button>
+            <span>{t('logout')}</span>
+          </ConfirmActionButton>
         </div>
 
         <div className="grid gap-6 xl:grid-cols-3">
@@ -413,9 +427,10 @@ function SettingsPage() {
               accent="blue"
             />
 
-            <div className="mt-6 grid gap-6 lg:grid-cols-3">
+            <div className="mt-6 grid items-start gap-6 lg:grid-cols-3">
               {/* Avatar column */}
-              <div className="flex flex-col items-center gap-4 rounded-2xl bg-[var(--color-surface-muted)] p-5 lg:col-span-1 border border-[var(--color-border)]">
+              <div className="relative flex flex-col items-center gap-4 overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-[linear-gradient(145deg,var(--color-surface),var(--color-primary-pale))] p-5 shadow-[0_16px_36px_rgba(15,23,42,0.06)] lg:col-span-1 lg:self-start">
+                <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-[var(--color-primary)]/10 blur-2xl" />
                 <div className="relative group">
                   <div className="absolute -inset-1 rounded-3xl bg-[var(--color-primary)] opacity-0 group-hover:opacity-10 transition-opacity duration-500 blur-xl" />
                   <label className="relative block cursor-pointer">
@@ -437,6 +452,11 @@ function SettingsPage() {
                   </label>
                 </div>
 
+                <div className="relative text-center">
+                  <p className="text-sm font-bold text-[var(--color-text)]">{user?.full_name ?? t('page.settings.profile_title')}</p>
+                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-muted)]">{t('page.settings.photo_hint')}</p>
+                </div>
+
                 {uploadProgress > 0 && (
                   <div className="w-full">
                     <div className="flex justify-between text-xs text-[var(--color-text-muted)] mb-1">
@@ -452,10 +472,17 @@ function SettingsPage() {
                   </div>
                 )}
 
-                <div className="flex w-full flex-col gap-2">
-                  <label className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] px-4 py-3 text-sm font-bold text-white shadow-lg shadow-[var(--color-primary)]/30 transition-all duration-300 hover:bg-[var(--color-primary-dark)] hover:shadow-xl hover:shadow-[var(--color-primary)]/40 hover:scale-105 active:scale-95">
-                    <HiOutlinePhoto className="text-lg" />
-                    {isUploadingAvatar ? t('page.settings.uploading') : user?.avatar_url ? t('page.settings.change_photo') : t('page.settings.upload_photo')}
+                <div className="relative flex w-full flex-col gap-2">
+                  <label
+                    aria-disabled={isUploadingAvatar}
+                    className={`inline-flex w-full min-w-0 cursor-pointer items-center justify-center gap-2 rounded-2xl border border-[#4338ca]/20 bg-gradient-to-r from-[#5753f6] to-[#7c3aed] px-4 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-indigo-500/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/30 active:translate-y-0 active:scale-[0.98] ${
+                      isUploadingAvatar ? 'pointer-events-none opacity-80' : ''
+                    }`}
+                  >
+                    <HiOutlinePhoto className="shrink-0 text-xl text-white" />
+                    <span className="min-w-0 truncate text-white">
+                      {isUploadingAvatar ? t('page.settings.uploading') : user?.avatar_url ? t('page.settings.change_photo') : t('page.settings.upload_photo')}
+                    </span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
                   </label>
 
@@ -467,8 +494,11 @@ function SettingsPage() {
                       confirmText={t('page.settings.delete_avatar_text')}
                       onConfirm={handleDeleteAvatar}
                       disabled={isDeletingAvatar}
-                      className="self-center px-5 text-red-600 hover:bg-red-50"
-                    />
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl !border-[var(--color-danger)]/30 !bg-[var(--color-danger-soft)] px-4 py-3 text-[var(--color-danger)] shadow-sm hover:!border-[var(--color-danger)]/60 hover:!bg-[var(--color-danger-soft)]"
+                    >
+                      <HiOutlineTrash className="text-lg" />
+                      <span className="text-sm font-bold">{t('page.settings.remove_photo')}</span>
+                    </ConfirmActionButton>
                   )}
                 </div>
               </div>
@@ -523,12 +553,12 @@ function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
+                  <div className="flex min-h-[52px] flex-wrap items-center justify-between gap-3 border-t border-[var(--color-border)] pt-4">
                     <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="submit"
                         disabled={isUpdatingProfile || !isProfileDirty}
-                        className="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-primary)] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[var(--color-primary)]/30 transition-all duration-300 hover:bg-[var(--color-primary-dark)] hover:shadow-xl hover:shadow-[var(--color-primary)]/40 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+                        className="inline-flex min-w-[172px] shrink-0 items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] px-6 py-3 text-sm font-bold text-white shadow-lg shadow-[var(--color-primary)]/30 transition-all duration-300 hover:bg-[var(--color-primary-dark)] hover:shadow-xl hover:shadow-[var(--color-primary)]/40 hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:border disabled:border-[var(--color-primary)]/25 disabled:bg-[var(--color-primary-pale)] disabled:text-[var(--color-primary)] disabled:shadow-none disabled:opacity-100 disabled:hover:scale-100"
                       >
                         <HiOutlineCheckCircle className="text-lg" />
                         {isUpdatingProfile ? t('common.saving') : t('page.settings.save_changes')}
@@ -573,7 +603,7 @@ function SettingsPage() {
                     </div>
                     <button
                       type="button"
-                      onClick={() => setShowPasswordForm(!showPasswordForm)}
+                      onClick={() => (showPasswordForm ? closePasswordForm() : setShowPasswordForm(true))}
                       className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm font-semibold text-[var(--color-text-muted)] transition-all duration-300 hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] hover:shadow-md"
                     >
                       {showPasswordForm ? (
@@ -592,12 +622,18 @@ function SettingsPage() {
                           <label className="mb-2 block text-sm font-semibold text-[var(--color-text)]">
                             {t('page.settings.current_password')}
                           </label>
-                          <input
-                            type="password"
-                            {...registerPassword('current_password')}
-                            placeholder={t('page.settings.current_password')}
-                            className={inputClass}
-                          />
+                          <div className="relative">
+                            <input
+                              type={visiblePasswords.current ? 'text' : 'password'}
+                              autoComplete="current-password"
+                              {...registerPassword('current_password')}
+                              placeholder={t('page.settings.current_password')}
+                              className={`${inputClass} pr-12`}
+                            />
+                            <button type="button" onClick={() => setVisiblePasswords((value) => ({ ...value, current: !value.current }))} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)]" aria-label={visiblePasswords.current ? t('page.settings.hide_password') : t('page.settings.show_password')}>
+                              {visiblePasswords.current ? <HiOutlineEyeSlash className="text-lg" /> : <HiOutlineEye className="text-lg" />}
+                            </button>
+                          </div>
                           {passwordErrors.current_password && (
                             <p className="mt-2 text-xs font-medium text-red-500 flex items-center gap-1">
                               <span className="h-1 w-1 rounded-full bg-red-500" />
@@ -610,12 +646,18 @@ function SettingsPage() {
                           <label className="mb-2 block text-sm font-semibold text-[var(--color-text)]">
                             {t('page.settings.new_password')}
                           </label>
-                          <input
-                            type="password"
-                            {...registerPassword('new_password')}
-                            placeholder={t('page.settings.new_password')}
-                            className={inputClass}
-                          />
+                          <div className="relative">
+                            <input
+                              type={visiblePasswords.next ? 'text' : 'password'}
+                              autoComplete="new-password"
+                              {...registerPassword('new_password')}
+                              placeholder={t('page.settings.new_password')}
+                              className={`${inputClass} pr-12`}
+                            />
+                            <button type="button" onClick={() => setVisiblePasswords((value) => ({ ...value, next: !value.next }))} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)]" aria-label={visiblePasswords.next ? t('page.settings.hide_password') : t('page.settings.show_password')}>
+                              {visiblePasswords.next ? <HiOutlineEyeSlash className="text-lg" /> : <HiOutlineEye className="text-lg" />}
+                            </button>
+                          </div>
                           {passwordErrors.new_password && (
                             <p className="mt-2 text-xs font-medium text-red-500 flex items-center gap-1">
                               <span className="h-1 w-1 rounded-full bg-red-500" />
@@ -625,16 +667,32 @@ function SettingsPage() {
                         </div>
                       </div>
 
+                      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2.5">
+                        <div className="mb-2 flex items-center justify-between text-xs font-semibold">
+                          <span className="text-[var(--color-text-muted)]">{t('page.settings.password_strength')}</span>
+                          <span className={passwordStrength === 3 ? 'text-emerald-600' : passwordStrength === 2 ? 'text-amber-600' : 'text-[var(--color-text-muted)]'}>{passwordStrength === 3 ? t('page.settings.password_strong') : passwordStrength === 2 ? t('page.settings.password_medium') : t('page.settings.password_weak')}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {[1, 2, 3].map((level) => <span key={level} className={`h-1.5 rounded-full ${passwordStrength >= level ? passwordStrength === 3 ? 'bg-emerald-500' : passwordStrength === 2 ? 'bg-amber-400' : 'bg-red-400' : 'bg-[var(--color-border)]'}`} />)}
+                        </div>
+                      </div>
+
                       <div>
                         <label className="mb-2 block text-sm font-semibold text-[var(--color-text)]">
                           {t('page.settings.confirm_new_password')}
                         </label>
-                        <input
-                          type="password"
-                          {...registerPassword('confirm_new_password')}
-                          placeholder={t('page.settings.confirm_new_password')}
-                          className={inputClass}
-                        />
+                        <div className="relative">
+                          <input
+                            type={visiblePasswords.confirm ? 'text' : 'password'}
+                            autoComplete="new-password"
+                            {...registerPassword('confirm_new_password')}
+                            placeholder={t('page.settings.confirm_new_password')}
+                            className={`${inputClass} pr-12`}
+                          />
+                          <button type="button" onClick={() => setVisiblePasswords((value) => ({ ...value, confirm: !value.confirm }))} className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)] hover:text-[var(--color-primary)]" aria-label={visiblePasswords.confirm ? t('page.settings.hide_password') : t('page.settings.show_password')}>
+                            {visiblePasswords.confirm ? <HiOutlineEyeSlash className="text-lg" /> : <HiOutlineEye className="text-lg" />}
+                          </button>
+                        </div>
                         {passwordErrors.confirm_new_password && (
                           <p className="mt-2 text-xs font-medium text-red-500 flex items-center gap-1">
                             <span className="h-1 w-1 rounded-full bg-red-500" />

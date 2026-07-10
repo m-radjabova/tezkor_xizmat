@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -13,6 +13,8 @@ import {
   HiOutlineCheckCircle,
   HiOutlineExclamationCircle,
   HiOutlineSparkles,
+  HiOutlinePlus,
+  HiOutlineXMark,
 } from 'react-icons/hi2'
 import ConfirmActionButton from '../../components/ConfirmActionButton'
 import EmptyState from '../../components/EmptyState'
@@ -20,6 +22,7 @@ import PageSection from '../../components/PageSection'
 import { useDebts } from '../../hooks/useDebts'
 import { usePreferences } from '../../hooks/usePreferences'
 import { formatCurrency, formatShortDate } from '../../utils/format'
+import type { Debt } from '../../types'
 type DebtFormValues = {
   title: string
   total_amount: number
@@ -84,7 +87,12 @@ function SummarySkeleton() {
 
 function DebtsPage() {
   const { t } = usePreferences()
-  const { debts, isLoading, createDebt, updateDebt, deleteDebt, isCreating, isUpdating, isDeleting } = useDebts()
+  const { debts, isLoading, createDebt, updateDebt, deleteDebt, makePayment, isCreating, isUpdating, isDeleting, isMakingPayment } = useDebts()
+  const [paymentDebt, setPaymentDebt] = useState<Debt | null>(null)
+  const [paymentAmount, setPaymentAmount] = useState('')
+  const [paymentError, setPaymentError] = useState('')
+  const [editingDebt, setEditingDebt] = useState<Debt | null>(null)
+  const [editValues, setEditValues] = useState({ title: '', total_amount: '', minimum_payment: '', due_date: '' })
   const debtSchema = z.object({
     title: z.string().min(2, t('page.debts.validation.title')),
     total_amount: z.number().positive(t('page.debts.validation.total')),
@@ -161,6 +169,60 @@ function DebtsPage() {
       status: values.paid_amount >= values.total_amount ? 'paid' : 'active',
     })
     reset()
+  }
+
+  const openPayment = (debt: Debt) => {
+    setPaymentDebt(debt)
+    setPaymentAmount('')
+    setPaymentError('')
+  }
+
+  const submitPayment = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!paymentDebt) return
+    const amount = Number(paymentAmount)
+    const remaining = Number(paymentDebt.total_amount) - Number(paymentDebt.paid_amount)
+
+    if (!Number.isFinite(amount) || amount <= 0 || amount > remaining) {
+      setPaymentError(t('page.debts.payment_validation'))
+      return
+    }
+
+    makePayment(
+      { id: paymentDebt.id, amount },
+      { onSuccess: () => setPaymentDebt(null) },
+    )
+  }
+
+  const openEdit = (debt: Debt) => {
+    setEditingDebt(debt)
+    setEditValues({
+      title: debt.title,
+      total_amount: String(debt.total_amount),
+      minimum_payment: debt.minimum_payment ? String(debt.minimum_payment) : '',
+      due_date: debt.due_date ?? '',
+    })
+  }
+
+  const submitEdit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!editingDebt) return
+    const totalAmount = Number(editValues.total_amount)
+    if (!editValues.title.trim() || !Number.isFinite(totalAmount) || totalAmount <= 0) return
+
+    updateDebt(
+      {
+        id: editingDebt.id,
+        payload: {
+          title: editValues.title.trim(),
+          total_amount: totalAmount,
+          minimum_payment: editValues.minimum_payment ? Number(editValues.minimum_payment) : null,
+          due_date: editValues.due_date || null,
+          status: Number(editingDebt.paid_amount) >= totalAmount ? 'paid' : 'active',
+        },
+      },
+      { onSuccess: () => setEditingDebt(null) },
+    )
   }
 
   return (
@@ -553,23 +615,24 @@ function DebtsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex shrink-0 gap-1.5 xl:flex-col">
+                        <div className="flex shrink-0 flex-wrap gap-2 sm:flex-nowrap xl:flex-col">
+                          <button
+                            type="button"
+                            disabled={isPaid || isMakingPayment}
+                            onClick={() => openPayment(debt)}
+                            className="inline-flex h-[42px] items-center justify-center gap-2 rounded-2xl bg-[var(--color-success)] px-3 text-xs font-bold text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-45"
+                          >
+                            <HiOutlineBanknotes className="text-lg" />
+                            <span>{t('page.debts.make_payment')}</span>
+                          </button>
                           <button
                             type="button"
                             disabled={isUpdating}
-                            onClick={() =>
-                              updateDebt({
-                                id: debt.id,
-                                payload: { paid_amount: paid + 50 },
-                              })
-                            }
-                            className={`flex h-[42px] w-[42px] items-center justify-center rounded-2xl border border-[var(--color-border)]/70 bg-[var(--color-surface)] transition-all duration-200 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 ${
-                              isPaid
-                                ? 'text-[var(--color-success)] hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)]'
-                                : 'text-[var(--color-text-muted)] hover:border-[var(--color-warning)] hover:bg-[var(--color-warning-soft)] hover:text-[var(--color-warning)]'
-                            }`}
+                            onClick={() => openEdit(debt)}
+                            className="inline-flex h-[42px] items-center justify-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-bold text-[var(--color-text-muted)] transition-all duration-200 hover:border-[var(--color-primary)]/40 hover:bg-[var(--color-primary-pale)] hover:text-[var(--color-primary)] disabled:cursor-not-allowed disabled:opacity-45"
                           >
                             <HiOutlinePencilSquare className="text-lg" />
+                            <span>{t('common.edit')}</span>
                           </button>
                           <ConfirmActionButton
                             icon={HiOutlineTrash}
@@ -578,7 +641,11 @@ function DebtsPage() {
                             confirmText={t('page.debts.delete_text', { title: debt.title })}
                             onConfirm={() => deleteDebt(debt.id)}
                             disabled={isDeleting}
-                          />
+                            className="inline-flex h-[42px] items-center justify-center gap-2 rounded-2xl px-3 text-xs font-bold"
+                          >
+                            <HiOutlineTrash className="text-lg" />
+                            <span>{t('page.debts.delete_label')}</span>
+                          </ConfirmActionButton>
                         </div>
                       </div>
                     </div>
@@ -589,6 +656,32 @@ function DebtsPage() {
           )}
         </PageSection>
       </div>
+
+      {paymentDebt && (
+        <div className="fixed inset-0 z-[60] flex items-end bg-black/45 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4" onClick={() => setPaymentDebt(null)}>
+          <form onSubmit={submitPayment} onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-2xl sm:rounded-[28px] sm:p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div><h3 className="text-lg font-extrabold text-[var(--color-text)]">{t('page.debts.make_payment')}</h3><p className="mt-1 text-sm text-[var(--color-text-muted)]">{paymentDebt.title}</p></div>
+              <button type="button" onClick={() => setPaymentDebt(null)} className="rounded-xl p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)]"><HiOutlineXMark className="text-xl" /></button>
+            </div>
+            <label className="mt-5 block text-sm font-bold text-[var(--color-text)]">{t('page.debts.payment_amount')}</label>
+            <input autoFocus type="number" min="0.01" step="0.01" value={paymentAmount} onChange={(event) => { setPaymentAmount(event.target.value); setPaymentError('') }} placeholder="2,000,000" className="mt-2 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 text-base font-bold text-[var(--color-text)] outline-none focus:border-[var(--color-success)] focus:bg-[var(--color-surface)]" />
+            <div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl bg-[var(--color-surface-soft)] p-3 text-xs"><span className="text-[var(--color-text-muted)]">{t('page.debts.paid_amount')}<strong className="mt-1 block text-sm text-[var(--color-text)]">{formatCurrency(paymentDebt.paid_amount)}</strong></span><span className="text-[var(--color-text-muted)]">{t('page.debts.remaining_amount')}<strong className="mt-1 block text-sm text-[var(--color-danger)]">{formatCurrency(Math.max(0, Number(paymentDebt.total_amount) - Number(paymentDebt.paid_amount)))}</strong></span></div>
+            {paymentError && <p className="mt-2 text-xs font-semibold text-[var(--color-danger)]">{paymentError}</p>}
+            <button type="submit" disabled={isMakingPayment} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-success)] px-4 py-3 font-bold text-white disabled:opacity-50"><HiOutlinePlus className="text-lg" />{isMakingPayment ? t('common.saving') : t('page.debts.confirm_payment')}</button>
+          </form>
+        </div>
+      )}
+
+      {editingDebt && (
+        <div className="fixed inset-0 z-[60] flex items-end bg-black/45 p-0 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4" onClick={() => setEditingDebt(null)}>
+          <form onSubmit={submitEdit} onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-2xl sm:rounded-[28px] sm:p-6">
+            <div className="flex items-start justify-between gap-4"><div><h3 className="text-lg font-extrabold text-[var(--color-text)]">{t('page.debts.edit_debt')}</h3><p className="mt-1 text-sm text-[var(--color-text-muted)]">{t('page.debts.edit_hint')}</p></div><button type="button" onClick={() => setEditingDebt(null)} className="rounded-xl p-2 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-soft)]"><HiOutlineXMark className="text-xl" /></button></div>
+            <div className="mt-5 space-y-3"><input value={editValues.title} onChange={(event) => setEditValues((value) => ({ ...value, title: event.target.value }))} placeholder={t('page.debts.title_placeholder')} className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]" /><input type="number" min="0.01" step="0.01" value={editValues.total_amount} onChange={(event) => setEditValues((value) => ({ ...value, total_amount: event.target.value }))} placeholder={t('page.debts.total_placeholder')} className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]" /><input type="number" min="0" step="0.01" value={editValues.minimum_payment} onChange={(event) => setEditValues((value) => ({ ...value, minimum_payment: event.target.value }))} placeholder={t('page.debts.minimum_placeholder')} className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]" /><input type="date" value={editValues.due_date} onChange={(event) => setEditValues((value) => ({ ...value, due_date: event.target.value }))} className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 text-sm font-semibold text-[var(--color-text)] outline-none focus:border-[var(--color-primary)]" /></div>
+            <button type="submit" disabled={isUpdating} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--color-primary)] px-4 py-3 font-bold text-white disabled:opacity-50"><HiOutlinePencilSquare className="text-lg" />{isUpdating ? t('common.saving') : t('page.debts.save_debt')}</button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

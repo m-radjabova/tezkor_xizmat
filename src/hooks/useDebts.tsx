@@ -26,6 +26,11 @@ async function deleteDebtRequest(id: string) {
   await apiClient.delete(`/debts/${id}`)
 }
 
+async function makePaymentRequest({ id, amount }: { id: string; amount: number }) {
+  const { data } = await apiClient.post<Debt>(`/debts/${id}/payments`, { amount })
+  return data
+}
+
 export function useDebts() {
   const queryClient = useQueryClient()
 
@@ -67,6 +72,17 @@ export function useDebts() {
     },
   })
 
+  const paymentMutation = useMutation({
+    mutationFn: makePaymentRequest,
+    onSuccess: () => {
+      showSuccessToast(translate('toast.debt_payment_added'))
+      void queryClient.invalidateQueries({ queryKey: DEBTS_QUERY_KEY })
+    },
+    onError: (error) => {
+      showErrorToast(getErrorMessage(error, translate('toast.debt_payment_failed')))
+    },
+  })
+
   return {
     debts: debtsQuery.data ?? [],
     isLoading: debtsQuery.isLoading,
@@ -74,8 +90,10 @@ export function useDebts() {
     createDebt: createMutation.mutate,
     updateDebt: updateMutation.mutate,
     deleteDebt: deleteMutation.mutate,
+    makePayment: paymentMutation.mutate,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending,
+    isMakingPayment: paymentMutation.isPending,
   }
 }

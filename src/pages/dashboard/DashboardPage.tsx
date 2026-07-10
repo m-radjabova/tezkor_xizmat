@@ -31,7 +31,7 @@ import { useSavingsGoals } from '../../hooks/useSavingsGoals'
 import { useTransactions } from '../../hooks/useTransactions'
 import { usePreferences } from '../../hooks/usePreferences'
 import { filterTransactions } from '../../utils/filters'
-import { formatCurrency, formatShortDate, formatMonthYear } from '../../utils/format'
+import { formatCompactCurrency, formatCurrency, formatShortDate, formatMonthYear } from '../../utils/format'
 
 /* ───── Color Palette ───── */
 const chartColors = [
@@ -1042,8 +1042,8 @@ function DashboardPage() {
                           padding: '10px 14px',
                         }}
                       />
-                      <text x="50%" y="46%" textAnchor="middle" className="fill-[var(--color-text)] text-[20px] font-extrabold">
-                        {formatCurrency(totals.expense)}
+                      <text x="50%" y="46%" textAnchor="middle" className="fill-[var(--color-text)] text-[18px] font-extrabold">
+                        {formatCompactCurrency(totals.expense)}
                       </text>
                       <text x="50%" y="58%" textAnchor="middle" className="fill-[var(--color-text-muted)] text-[12px] font-medium">
                         {t('common.total')}
@@ -1063,7 +1063,7 @@ function DashboardPage() {
                       <div className="flex flex-1 items-center justify-between gap-3">
                         <span className="truncate text-sm font-bold text-[var(--color-text)]">{item.label}</span>
                         <div className="flex items-center gap-3.5 shrink-0">
-                          <span className="text-sm font-bold text-[var(--color-text)]">{formatCurrency(item.amount)}</span>
+                          <span className="text-sm font-bold text-[var(--color-text)]">{formatCompactCurrency(item.amount)}</span>
                           <GradientBadge
                             label={`${item.percent.toFixed(1)}%`}
                             gradient={GRADIENTS.primary}

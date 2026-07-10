@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,10 +9,11 @@ import {
   HiOutlineCurrencyDollar,
   HiOutlineCalendarDays,
   HiOutlineTag,
-  HiOutlineRectangleGroup,
   HiOutlineChevronDown,
   HiOutlineBanknotes,
   HiOutlineChartBar,
+  HiOutlineEye,
+  HiOutlineXMark,
 } from 'react-icons/hi2'
 import ConfirmActionButton from '../../components/ConfirmActionButton'
 import EmptyState from '../../components/EmptyState'
@@ -20,7 +21,9 @@ import PageSection from '../../components/PageSection'
 import { useBudgets } from '../../hooks/useBudgets'
 import { useCategories } from '../../hooks/useCategories'
 import { usePreferences } from '../../hooks/usePreferences'
+import { useTransactions } from '../../hooks/useTransactions'
 import { formatCurrency, formatMonthYear } from '../../utils/format'
+import type { Budget } from '../../types'
 
 type BudgetFormValues = {
   month: number
@@ -80,6 +83,10 @@ function BudgetsPage() {
   const { t } = usePreferences()
   const { budgets, isLoading, createBudget, updateBudget, deleteBudget, isCreating, isUpdating, isDeleting } = useBudgets()
   const { categories } = useCategories()
+  const { transactions } = useTransactions()
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null)
+  const [editLimit, setEditLimit] = useState('')
+  const [detailsBudget, setDetailsBudget] = useState<Budget | null>(null)
   const budgetSchema = z.object({
     month: z.number().min(1, t('page.budgets.validation.month')).max(12, t('page.budgets.validation.month')),
     year: z.number().min(2024, t('page.budgets.validation.year_min')).max(2100, t('page.budgets.validation.year_max')),
@@ -125,15 +132,25 @@ function BudgetsPage() {
     [budgets],
   )
 
-  const categoriesCovered = useMemo(
-    () => new Set(budgets.map((b) => b.category_id).filter(Boolean)).size,
-    [budgets],
-  )
+  const spendingByBudget = useMemo(() => {
+    const spend = new Map<string, number>()
+    budgets.forEach((budget) => {
+      const amount = transactions.reduce((sum, transaction) => {
+        const date = new Date(`${transaction.transaction_date}T00:00:00`)
+        const matchesPeriod = date.getMonth() + 1 === budget.month && date.getFullYear() === budget.year
+        const matchesCategory = transaction.category_id === budget.category_id
+        return transaction.type === 'expense' && matchesPeriod && matchesCategory ? sum + Number(transaction.amount) : sum
+      }, 0)
+      spend.set(budget.id, amount)
+    })
+    return spend
+  }, [budgets, transactions])
 
-  const averageBudget = useMemo(
-    () => (budgets.length > 0 ? totalBudget / budgets.length : 0),
-    [budgets, totalBudget],
-  )
+  const totalSpent = useMemo(() => Array.from(spendingByBudget.values()).reduce((sum, value) => sum + value, 0), [spendingByBudget])
+  const totalRemaining = Math.max(0, totalBudget - totalSpent)
+  const periodLabel = budgets.length > 0 && budgets.every((budget) => budget.month === budgets[0].month && budget.year === budgets[0].year)
+    ? formatMonthYear(budgets[0].month, budgets[0].year)
+    : t('page.budgets.list_title')
 
   const onSubmit = (values: BudgetFormValues) => {
     createBudget({
@@ -159,19 +176,24 @@ function BudgetsPage() {
           <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 sm:hidden">
             {[
               {
-                label: t('page.budgets.total_budgets'),
-                value: formatCurrency(totalBudget),
+                label: t('page.budgets.active_budgets'),
+                value: String(budgets.length),
                 tone: 'text-[var(--color-primary)]',
               },
               {
-                label: t('page.budgets.categories_covered'),
-                value: `${categoriesCovered} / ${expenseCategories.length || 1}`,
-                tone: 'text-[var(--color-success)]',
+                label: t('page.budgets.total_limit'),
+                value: formatCurrency(totalBudget),
+                tone: 'text-[var(--color-purple)]',
               },
               {
-                label: t('page.budgets.active_budgets'),
-                value: String(budgets.length),
-                tone: 'text-[var(--color-purple)]',
+                label: t('page.budgets.spent'),
+                value: formatCurrency(totalSpent),
+                tone: 'text-[var(--color-danger)]',
+              },
+              {
+                label: t('page.budgets.remaining'),
+                value: formatCurrency(totalRemaining),
+                tone: 'text-[var(--color-success)]',
               },
             ].map((item, index, list) => (
               <div
@@ -189,25 +211,33 @@ function BudgetsPage() {
           <div className="hidden gap-4 sm:grid sm:grid-cols-2 xl:grid-cols-3">
             <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.total_budgets')}</p>
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.active_budgets')}</p>
               <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-primary)]">
-                {formatCurrency(totalBudget)}
+                {budgets.length}
               </p>
             </div>
 
             <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.categories_covered')}</p>
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.total_limit')}</p>
               <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">
-                {categoriesCovered} <span className="text-base font-semibold text-[var(--color-text-muted)]">/ {expenseCategories.length || 1}</span>
+                {formatCurrency(totalBudget)}
               </p>
             </div>
 
             <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.active_budgets')}</p>
-              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-purple)]">
-                {budgets.length}
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.spent')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-danger)]">
+                {formatCurrency(totalSpent)}
+              </p>
+            </div>
+
+            <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
+              <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.budgets.remaining')}</p>
+              <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">
+                {formatCurrency(totalRemaining)}
               </p>
             </div>
           </div>
@@ -343,7 +373,7 @@ function BudgetsPage() {
         </PageSection>
 
         <PageSection
-          title={t('page.budgets.list_title')}
+          title={periodLabel === t('page.budgets.list_title') ? periodLabel : `${periodLabel} ${t('page.budgets.budget_plural')}`}
           subtitle={t('page.budgets.list_subtitle')}
           className="order-1 xl:order-2"
         >
@@ -365,22 +395,16 @@ function BudgetsPage() {
             <>
               {/* Summary bar */}
               <div className="mobile-summary-bar mb-5 rounded-2xl px-4 py-3">
-                <span className="text-sm font-semibold text-[var(--color-text-muted)]">
-                  {budgets.length} {budgets.length === 1 ? t('page.budgets.budget_singular') : t('page.budgets.budget_plural')}
-                </span>
+                <span className="text-sm font-semibold text-[var(--color-text-muted)]">{budgets.length} {t('page.budgets.active_budgets')}</span>
                 <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <HiOutlineBanknotes className="text-sm text-[var(--color-primary)]" />
-                  <span className="text-[var(--color-primary)]">{formatCurrency(totalBudget)} {t('common.total')}</span>
+                  <span className="text-[var(--color-primary)]">{formatCurrency(totalBudget)} {t('page.budgets.total_limit')}</span>
                 </span>
-                {budgets.length > 1 && (
-                  <>
-                    <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
-                    <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-text-muted)]">
-                      {t('common.average_short')} {formatCurrency(averageBudget)}
-                    </span>
-                  </>
-                )}
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-danger)]">{formatCurrency(totalSpent)} {t('page.budgets.spent')}</span>
+                <span className="hidden h-3 w-px bg-[var(--color-border)] sm:block" />
+                <span className="flex items-center gap-1.5 text-sm font-semibold text-[var(--color-success)]">{formatCurrency(totalRemaining)} {t('page.budgets.remaining')}</span>
               </div>
 
               {/* Budget list */}
@@ -389,7 +413,15 @@ function BudgetsPage() {
                   const categoryColor = categoryColorMap.get(budget.category_id ?? '') ?? '#e5a4b8'
                   const categoryName = categoryNameMap.get(budget.category_id ?? '')
                   const budgetNumber = Number(budget.limit_amount)
-                  const percentageOfTotal = totalBudget > 0 ? (budgetNumber / totalBudget) * 100 : 0
+                  const spent = spendingByBudget.get(budget.id) ?? 0
+                  const remaining = Math.max(0, budgetNumber - spent)
+                  const progress = budgetNumber > 0 ? Math.min(100, (spent / budgetNumber) * 100) : 0
+                  const budgetStatus = progress >= 90 ? 'exceeded' : progress >= 70 ? 'warning' : 'safe'
+                  const statusStyle = budgetStatus === 'exceeded'
+                    ? 'bg-[var(--color-danger-soft)] text-[var(--color-danger)]'
+                    : budgetStatus === 'warning'
+                      ? 'bg-[var(--color-warning-soft)] text-[var(--color-warning)]'
+                      : 'bg-[var(--color-success-soft)] text-[var(--color-success)]'
 
                   return (
                     <div
@@ -418,32 +450,11 @@ function BudgetsPage() {
                                 style={{ backgroundColor: categoryColor }}
                               />
                             </span>
-                            <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">
-                              {formatMonthYear(budget.month, budget.year)}
-                            </p>
+                            <p className="truncate text-base font-bold text-[var(--color-text)] sm:text-lg">{categoryName ?? t('common.no_category')}</p>
+                            <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${statusStyle}`}>{t(`page.budgets.status_${budgetStatus}`)}</span>
                           </div>
 
-                          <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                            <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-surface-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)]">
-                              <HiOutlineCurrencyDollar className="text-xs" />
-                              {t('page.budgets.limit_label')}: {formatCurrency(budget.limit_amount)}
-                            </span>
-                            {categoryName && (
-                              <span
-                                className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-primary-pale)] px-2.5 py-1 text-xs font-medium"
-                                style={{ color: categoryColor }}
-                              >
-                                <HiOutlineRectangleGroup className="text-xs" />
-                                {categoryName}
-                              </span>
-                            )}
-                            {!categoryName && (
-                              <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--color-surface-soft)] px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)]">
-                                <HiOutlineTag className="text-xs" />
-                                {t('common.no_category')}
-                              </span>
-                            )}
-                          </div>
+                          <div className="mt-3 grid grid-cols-3 gap-2 rounded-2xl bg-[var(--color-surface-soft)] p-3 text-xs"><span className="text-[var(--color-text-muted)]">{t('page.budgets.limit_label')}<strong className="mt-1 block text-sm text-[var(--color-text)]">{formatCurrency(budgetNumber)}</strong></span><span className="text-[var(--color-text-muted)]">{t('page.budgets.spent')}<strong className="mt-1 block text-sm text-[var(--color-danger)]">{formatCurrency(spent)}</strong></span><span className="text-[var(--color-text-muted)]">{t('page.budgets.remaining')}<strong className="mt-1 block text-sm text-[var(--color-success)]">{formatCurrency(remaining)}</strong></span></div>
 
                           {/* Progress bar */}
                           <div className="mt-3 flex items-center gap-3">
@@ -451,13 +462,13 @@ function BudgetsPage() {
                               <div
                                 className="h-full rounded-full transition-all duration-700 ease-out"
                                 style={{
-                                  width: `${percentageOfTotal}%`,
-                                  background: `linear-gradient(90deg, ${categoryColor}, ${categoryColor}bb)`,
+                                  width: `${progress}%`,
+                                  background: budgetStatus === 'exceeded' ? 'var(--color-danger)' : budgetStatus === 'warning' ? 'var(--color-warning)' : `linear-gradient(90deg, ${categoryColor}, ${categoryColor}bb)`,
                                 }}
                               />
                             </div>
                             <span className="shrink-0 text-[11px] font-semibold text-[var(--color-text-muted)]">
-                              {t('page.budgets.percent_of_total', { percent: percentageOfTotal.toFixed(1) })}
+                              {progress.toFixed(0)}%
                             </span>
                           </div>
                         </div>
@@ -466,18 +477,14 @@ function BudgetsPage() {
                         <div className="flex shrink-0 justify-end gap-2">
                           <button
                             type="button"
-                            onClick={() =>
-                              updateBudget({
-                                id: budget.id,
-                                payload: { limit_amount: Number(budget.limit_amount) + 50 },
-                              })
-                            }
+                            onClick={() => { setEditingBudget(budget); setEditLimit(String(budget.limit_amount)) }}
                             disabled={isUpdating}
                             className="flex items-center gap-2 rounded-2xl border border-[var(--color-border)]/70 bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text-muted)] transition-all duration-200 hover:border-[var(--color-success)] hover:bg-[var(--color-success-soft)] hover:text-[var(--color-success)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
                           >
                             <HiOutlinePencilSquare className="text-base" />
-                            +$50
+                            {t('common.edit')}
                           </button>
+                          <button type="button" onClick={() => setDetailsBudget(budget)} className="flex items-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text-muted)] transition-all hover:border-[var(--color-primary)]/40 hover:text-[var(--color-primary)]"><HiOutlineEye className="text-base" />{t('page.budgets.details')}</button>
                           <ConfirmActionButton
                             icon={HiOutlineTrash}
                             label={t('page.budgets.delete_label')}
@@ -496,6 +503,9 @@ function BudgetsPage() {
           )}
         </PageSection>
       </div>
+
+      {editingBudget && <div className="fixed inset-0 z-[60] flex items-end bg-black/45 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4" onClick={() => setEditingBudget(null)}><form onSubmit={(event) => { event.preventDefault(); const amount = Number(editLimit); if (amount > 0) updateBudget({ id: editingBudget.id, payload: { limit_amount: amount } }, { onSuccess: () => setEditingBudget(null) }) }} onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-t-[28px] bg-[var(--color-surface)] p-6 shadow-2xl sm:rounded-[28px]"><div className="flex items-center justify-between"><div><h3 className="text-lg font-extrabold text-[var(--color-text)]">{t('page.budgets.update_limit')}</h3><p className="mt-1 text-sm text-[var(--color-text-muted)]">{categoryNameMap.get(editingBudget.category_id ?? '') ?? t('common.no_category')}</p></div><button type="button" onClick={() => setEditingBudget(null)} className="p-2 text-[var(--color-text-muted)]"><HiOutlineXMark className="text-xl" /></button></div><input autoFocus type="number" min="0.01" step="0.01" value={editLimit} onChange={(event) => setEditLimit(event.target.value)} className="mt-5 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 text-lg font-bold text-[var(--color-text)] outline-none" /><button type="submit" disabled={isUpdating} className="mt-4 w-full rounded-2xl bg-[var(--color-primary)] px-4 py-3 font-bold text-white disabled:opacity-50">{isUpdating ? t('common.saving') : t('page.budgets.update_limit')}</button></form></div>}
+      {detailsBudget && <div className="fixed inset-0 z-[60] flex items-end bg-black/45 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4" onClick={() => setDetailsBudget(null)}><div onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-t-[28px] bg-[var(--color-surface)] p-6 shadow-2xl sm:rounded-[28px]"><div className="flex items-center justify-between"><div><h3 className="text-lg font-extrabold text-[var(--color-text)]">{categoryNameMap.get(detailsBudget.category_id ?? '') ?? t('common.no_category')}</h3><p className="mt-1 text-sm text-[var(--color-text-muted)]">{formatMonthYear(detailsBudget.month, detailsBudget.year)}</p></div><button type="button" onClick={() => setDetailsBudget(null)} className="p-2 text-[var(--color-text-muted)]"><HiOutlineXMark className="text-xl" /></button></div><div className="mt-5 grid grid-cols-3 gap-3 rounded-2xl bg-[var(--color-surface-soft)] p-4 text-xs"><span className="text-[var(--color-text-muted)]">{t('page.budgets.limit_label')}<strong className="mt-1 block text-sm text-[var(--color-text)]">{formatCurrency(detailsBudget.limit_amount)}</strong></span><span className="text-[var(--color-text-muted)]">{t('page.budgets.spent')}<strong className="mt-1 block text-sm text-[var(--color-danger)]">{formatCurrency(spendingByBudget.get(detailsBudget.id) ?? 0)}</strong></span><span className="text-[var(--color-text-muted)]">{t('page.budgets.remaining')}<strong className="mt-1 block text-sm text-[var(--color-success)]">{formatCurrency(Math.max(0, Number(detailsBudget.limit_amount) - (spendingByBudget.get(detailsBudget.id) ?? 0)))}</strong></span></div></div></div>}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -11,6 +11,8 @@ import {
   HiOutlineCheck,
   HiOutlineTrophy,
   HiOutlineSparkles,
+  HiOutlineBanknotes,
+  HiOutlineXMark,
 } from 'react-icons/hi2'
 import ConfirmActionButton from '../../components/ConfirmActionButton'
 import EmptyState from '../../components/EmptyState'
@@ -18,6 +20,7 @@ import PageSection from '../../components/PageSection'
 import { useSavingsGoals } from '../../hooks/useSavingsGoals'
 import { usePreferences } from '../../hooks/usePreferences'
 import { formatCurrency, formatShortDate } from '../../utils/format'
+import type { SavingsGoal } from '../../types'
 type SavingsGoalFormValues = {
   title: string
   target_amount: number
@@ -64,6 +67,7 @@ function GoalSkeleton() {
           <div className="h-11 w-11 rounded-2xl bg-[var(--color-border)]/40" />
         </div>
       </div>
+
     </div>
   )
 }
@@ -86,7 +90,12 @@ function SummarySkeleton() {
 
 function SavingsGoalsPage() {
   const { t } = usePreferences()
-  const { savingsGoals, isLoading, createSavingsGoal, updateSavingsGoal, deleteSavingsGoal, isCreating, isUpdating, isDeleting } = useSavingsGoals()
+  const { savingsGoals, isLoading, createSavingsGoal, updateSavingsGoal, deleteSavingsGoal, addDeposit, isCreating, isUpdating, isDeleting, isAddingDeposit } = useSavingsGoals()
+  const [depositGoal, setDepositGoal] = useState<SavingsGoal | null>(null)
+  const [depositAmount, setDepositAmount] = useState('')
+  const [depositError, setDepositError] = useState('')
+  const [editingGoal, setEditingGoal] = useState<SavingsGoal | null>(null)
+  const formRef = useRef<HTMLFormElement | null>(null)
   const savingsGoalSchema = z.object({
     title: z.string().min(2, t('page.savings.validation.title')),
     target_amount: z.number().positive(t('page.savings.validation.target')),
@@ -103,8 +112,6 @@ function SavingsGoalsPage() {
     resolver: zodResolver(savingsGoalSchema),
     defaultValues: {
       title: '',
-      target_amount: 0,
-      current_amount: 0,
       deadline: '',
     },
   })
@@ -138,15 +145,63 @@ function SavingsGoalsPage() {
     () => savingsGoals.filter((g) => Number(g.current_amount) >= Number(g.target_amount)).length,
     [savingsGoals],
   )
+  const activeGoals = savingsGoals.length - completedGoals
+  const totalRemaining = Math.max(0, totalTarget - totalSaved)
 
-  const onSubmit = (values: SavingsGoalFormValues) => {
-    createSavingsGoal({
+  const resetForm = () => {
+    setEditingGoal(null)
+    reset({
+      title: '',
+      target_amount: undefined,
+      current_amount: undefined,
+      deadline: '',
+    })
+  }
+
+  const openEdit = (goal: SavingsGoal) => {
+    setEditingGoal(goal)
+    reset({
+      title: goal.title,
+      target_amount: Number(goal.target_amount),
+      current_amount: Number(goal.current_amount),
+      deadline: goal.deadline ?? '',
+    })
+    requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }
+
+  const toPayload = (values: SavingsGoalFormValues) => ({
       title: values.title,
       target_amount: values.target_amount,
       current_amount: values.current_amount,
       deadline: values.deadline || null,
-    })
-    reset()
+  })
+
+  const onSubmit = (values: SavingsGoalFormValues) => {
+    const payload = toPayload(values)
+    if (editingGoal) {
+      updateSavingsGoal(
+        {
+          id: editingGoal.id,
+          payload,
+        },
+        { onSuccess: resetForm },
+      )
+      return
+    }
+
+    createSavingsGoal(payload, { onSuccess: resetForm })
+  }
+
+  const submitDeposit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!depositGoal) return
+    const amount = Number(depositAmount)
+    const remaining = Number(depositGoal.target_amount) - Number(depositGoal.current_amount)
+    if (!Number.isFinite(amount) || amount <= 0 || amount > remaining) {
+      setDepositError(t('page.savings.deposit_validation'))
+      return
+    }
+    addDeposit({ id: depositGoal.id, amount }, { onSuccess: () => setDepositGoal(null) })
   }
 
   return (
@@ -160,9 +215,10 @@ function SavingsGoalsPage() {
         <>
           <div className="mobile-surface-card overflow-hidden rounded-[28px] p-2 md:hidden">
             {[
+              { label: t('page.savings.active_goals'), value: String(activeGoals), tone: 'text-[var(--color-primary)]' },
               { label: t('page.savings.total_saved'), value: formatCurrency(totalSaved), tone: 'text-[var(--color-purple)]' },
-              { label: t('page.savings.active_goals'), value: String(savingsGoals.length), tone: 'text-[var(--color-primary)]' },
-              { label: t('page.savings.completed'), value: String(completedGoals), tone: 'text-[var(--color-success)]' },
+              { label: t('page.savings.remaining'), value: formatCurrency(totalRemaining), tone: 'text-[var(--color-danger)]' },
+              { label: t('page.savings.overall_progress'), value: `${overallProgress}%`, tone: 'text-[var(--color-success)]' },
             ].map((item, index, list) => (
               <div key={item.label} className={`px-3 py-3 ${index < list.length - 1 ? 'border-b border-[var(--color-border)]/70' : ''}`}>
                 <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">{item.label}</p>
@@ -171,7 +227,7 @@ function SavingsGoalsPage() {
             ))}
           </div>
 
-          <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-3">
+          <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-purple)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
             <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.savings.total_saved')}</p>
@@ -193,28 +249,29 @@ function SavingsGoalsPage() {
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-primary)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
             <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.savings.active_goals')}</p>
             <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-primary)]">
-              {savingsGoals.length}
+              {activeGoals}
             </p>
           </div>
 
           <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl transition-all duration-500 group-hover:scale-125" />
-            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.savings.completed')}</p>
-            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">
-              {completedGoals}
+            <p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.savings.remaining')}</p>
+            <p className="relative mt-3 text-3xl font-extrabold text-[var(--color-danger)]">
+              {formatCurrency(totalRemaining)}
             </p>
           </div>
+          <div className="group relative overflow-hidden rounded-[28px] border border-[var(--color-border)]/70 bg-[var(--color-surface)] p-6 shadow-sm transition-all duration-200 hover:shadow-[var(--shadow-card)]"><div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[var(--color-success)]/5 blur-2xl" /><p className="relative text-sm font-semibold text-[var(--color-text-muted)]">{t('page.savings.overall_progress')}</p><p className="relative mt-3 text-3xl font-extrabold text-[var(--color-success)]">{overallProgress}%</p></div>
           </div>
         </>
       ) : null}
 
       <div className="grid items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(320px,380px)_minmax(0,1fr)]">
         {/* ───── Form ───── */}
-        <PageSection title={t('page.savings.form_title')} subtitle={t('page.savings.form_subtitle')}>
+        <PageSection title={editingGoal ? `${t('common.edit')} ${editingGoal.title}` : t('page.savings.form_title')} subtitle={t('page.savings.form_subtitle')}>
           {isLoading ? (
             <FormSkeleton />
           ) : (
-            <form className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
+            <form ref={formRef} className="mt-5 space-y-4" onSubmit={handleSubmit(onSubmit)}>
               {/* Title */}
               <div className="group relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
@@ -307,21 +364,30 @@ function SavingsGoalsPage() {
               )}
 
               {/* Submit */}
+              {editingGoal && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-bold text-[var(--color-text-muted)] transition-all hover:border-[var(--color-border-strong)] hover:bg-[var(--color-surface-soft)]"
+                >
+                  {t('cancel')}
+                </button>
+              )}
               <button
                 type="submit"
-                disabled={isCreating}
+                disabled={isCreating || isUpdating}
                 className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-[var(--color-purple)] px-4 py-3.5 text-sm font-bold text-white transition-all duration-200 hover:bg-[var(--color-purple-soft)] hover:text-[var(--color-purple)] hover:shadow-lg hover:shadow-[var(--color-purple)]/20 disabled:opacity-70 disabled:hover:shadow-none"
               >
                 <span className="absolute inset-0 -translate-x-full skew-x-12 bg-gradient-to-r from-transparent via-white/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 <HiOutlineFlag className="relative text-lg" />
                 <span className="relative">
-                  {isCreating ? (
+                  {isCreating || isUpdating ? (
                     <span className="flex items-center gap-2">
                       <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
                       {t('common.saving')}
                     </span>
                   ) : (
-                    t('page.savings.add')
+                    editingGoal ? t('common.save_changes') : t('page.savings.add')
                   )}
                 </span>
               </button>
@@ -419,7 +485,7 @@ function SavingsGoalsPage() {
                                 {goal.title}
                               </p>
                               <p className="text-sm text-[var(--color-text-muted)]">
-                                {formatCurrency(current)} / {formatCurrency(target)}
+                                {t('page.savings.saved')}: {formatCurrency(current)} · {t('page.savings.target')}: {formatCurrency(target)}
                               </p>
                             </div>
                           </div>
@@ -465,20 +531,16 @@ function SavingsGoalsPage() {
                         </div>
 
                         {/* Actions */}
-                        <div className="flex shrink-0 justify-end gap-1.5 xl:flex-col">
+                        <div className="flex shrink-0 flex-wrap justify-end gap-2 xl:flex-col">
                           <button
                             type="button"
-                            disabled={isUpdating}
-                            onClick={() =>
-                              updateSavingsGoal({
-                                id: goal.id,
-                                payload: { current_amount: current + 100 },
-                              })
-                            }
-                            className="flex h-[42px] w-[42px] items-center justify-center rounded-2xl border border-[var(--color-border)]/70 bg-[var(--color-surface)] text-[var(--color-text-muted)] transition-all duration-200 hover:border-[var(--color-purple)] hover:bg-[var(--color-purple-soft)] hover:text-[var(--color-purple)] active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                            disabled={isCompleted || isAddingDeposit}
+                            onClick={() => { setDepositGoal(goal); setDepositAmount(''); setDepositError('') }}
+                            className="inline-flex h-[42px] items-center justify-center gap-2 rounded-2xl bg-[var(--color-success)] px-3 text-xs font-bold text-white shadow-sm transition-all hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-45"
                           >
-                            <HiOutlinePencilSquare className="text-lg" />
+                            <HiOutlineBanknotes className="text-lg" />{t('page.savings.add_money')}
                           </button>
+                          <button type="button" disabled={isUpdating} onClick={() => openEdit(goal)} className="inline-flex h-[42px] items-center justify-center gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-bold text-[var(--color-text-muted)] transition-all hover:border-[var(--color-purple)] hover:text-[var(--color-purple)] disabled:opacity-45"><HiOutlinePencilSquare className="text-lg" />{t('common.edit')}</button>
                           <ConfirmActionButton
                             icon={HiOutlineTrash}
                             label={t('page.savings.delete_label')}
@@ -486,7 +548,11 @@ function SavingsGoalsPage() {
                             confirmText={t('page.savings.delete_text', { title: goal.title })}
                             onConfirm={() => deleteSavingsGoal(goal.id)}
                             disabled={isDeleting}
-                          />
+                            className="inline-flex h-[42px] items-center justify-center gap-2 rounded-2xl px-3 text-xs font-bold"
+                          >
+                            <HiOutlineTrash className="text-lg" />
+                            <span>{t('page.savings.delete_label')}</span>
+                          </ConfirmActionButton>
                         </div>
                       </div>
                     </div>
@@ -497,6 +563,8 @@ function SavingsGoalsPage() {
           )}
         </PageSection>
       </div>
+
+      {depositGoal && <div className="fixed inset-0 z-[60] flex items-end bg-black/45 backdrop-blur-sm sm:items-center sm:justify-center sm:p-4" onClick={() => setDepositGoal(null)}><form onSubmit={submitDeposit} onClick={(event) => event.stopPropagation()} className="w-full max-w-md rounded-t-[28px] bg-[var(--color-surface)] p-6 shadow-2xl sm:rounded-[28px]"><div className="flex items-start justify-between"><div><h3 className="text-lg font-extrabold text-[var(--color-text)]">{t('page.savings.add_money')}</h3><p className="mt-1 text-sm text-[var(--color-text-muted)]">{depositGoal.title}</p></div><button type="button" onClick={() => setDepositGoal(null)} className="p-2 text-[var(--color-text-muted)]"><HiOutlineXMark className="text-xl" /></button></div><label className="mt-5 block text-sm font-bold text-[var(--color-text)]">{t('page.savings.deposit_amount')}</label><input autoFocus type="number" min="0.01" step="0.01" value={depositAmount} onChange={(event) => { setDepositAmount(event.target.value); setDepositError('') }} placeholder="1,000,000" className="mt-2 w-full rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface-soft)] px-4 py-3 text-base font-bold text-[var(--color-text)] outline-none focus:border-[var(--color-success)]" /><div className="mt-3 grid grid-cols-2 gap-3 rounded-2xl bg-[var(--color-surface-soft)] p-3 text-xs"><span className="text-[var(--color-text-muted)]">{t('page.savings.saved')}<strong className="mt-1 block text-sm text-[var(--color-text)]">{formatCurrency(depositGoal.current_amount)}</strong></span><span className="text-[var(--color-text-muted)]">{t('page.savings.remaining')}<strong className="mt-1 block text-sm text-[var(--color-danger)]">{formatCurrency(Math.max(0, Number(depositGoal.target_amount) - Number(depositGoal.current_amount)))}</strong></span></div>{depositError && <p className="mt-2 text-xs font-semibold text-[var(--color-danger)]">{depositError}</p>}<button type="submit" disabled={isAddingDeposit} className="mt-5 w-full rounded-2xl bg-[var(--color-success)] px-4 py-3 font-bold text-white disabled:opacity-50">{isAddingDeposit ? t('common.saving') : t('page.savings.confirm_deposit')}</button></form></div>}
     </div>
   )
 }
