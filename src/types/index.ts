@@ -1,5 +1,5 @@
 import type { User } from './user'
-import type { LoginPayload, RegisterPayload } from './auth'
+import type { GoogleLoginPayload, LoginPayload, RegisterPayload } from './auth'
 
 export * from './auth'
 export * from './budget'
@@ -17,6 +17,7 @@ export interface AuthContextValue {
   isLoading: boolean
   isAuthenticated: boolean
   login: (payload: LoginPayload) => Promise<void>
+  loginWithGoogle: (payload: GoogleLoginPayload) => Promise<void>
   register: (payload: RegisterPayload) => Promise<void>
   logout: () => void
   refreshSession: () => Promise<void>

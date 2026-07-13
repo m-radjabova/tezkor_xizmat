@@ -17,3 +17,7 @@ export interface AuthTokens {
   token_type: string
   role: UserRole
 }
+
+export interface GoogleLoginPayload {
+  id_token: string
+}

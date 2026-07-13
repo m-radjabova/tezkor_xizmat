@@ -20,6 +20,7 @@
     "aos": "^2.3.4",
     "axios": "^1.15.0",
     "canvas-confetti": "^1.9.4",
+    "firebase": "^12.16.0",
     "framer-motion": "^12.42.0",
     "i18next": "^26.0.8",
     "lottie-react": "^2.4.1",

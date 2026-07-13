@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import apiClient from '../apiClient/apiClient'
 import { AuthContext } from './auth-context'
-import type { AuthTokens, LoginPayload, RegisterPayload, User } from '../types'
+import type { AuthTokens, GoogleLoginPayload, LoginPayload, RegisterPayload, User } from '../types'
 import { showInfoToast, showSuccessToast } from '../utils/toast'
 import { translate } from '../utils/i18n'
 import { clearAuthStorage, clearStoredUser, getAccessToken, getRefreshToken, saveTokens } from '../utils/storage'
@@ -26,6 +26,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const login = async (payload: LoginPayload) => {
     const { data } = await apiClient.post<AuthTokens>('/auth/login', payload)
+    saveTokens(data)
+    await fetchMe()
+    showSuccessToast(translate('toast.login_success'))
+  }
+
+  const loginWithGoogle = async (payload: GoogleLoginPayload) => {
+    const { data } = await apiClient.post<AuthTokens>('/auth/google', payload)
     saveTokens(data)
     await fetchMe()
     showSuccessToast(translate('toast.login_success'))
@@ -111,6 +118,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isLoading,
         isAuthenticated: Boolean(user),
         login,
+        loginWithGoogle,
         register,
         logout,
         refreshSession,
