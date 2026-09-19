@@ -19,6 +19,6 @@ declare module "*.jpg" {
 }
 
 declare module "*.json" {
-    const value: Record<string, string>;
+    const value: unknown;
     export default value;
 }

@@ -1,47 +1,54 @@
-import LottieModule from 'lottie-react'
-import { useEffect, useRef, type ComponentType } from 'react'
-import contractAnimation from '../assets/Contract.json'
-
-type LottieProps = {
-  animationData: object
-  loop?: boolean
-  autoplay?: boolean
-  className?: string
-  lottieRef?: {
-    current: {
-      setSpeed: (speed: number) => void
-    } | null
-  }
-}
-
-const Lottie = ((LottieModule as { default?: unknown }).default ??
-  LottieModule) as ComponentType<LottieProps>
+import { useLottie } from 'lottie-react'
+import loadingAnimation from '../assets/Loading 40 _ Paperplane.json'
+import { motion } from 'framer-motion'
 
 function IsLoading() {
-  const lottieRef = useRef<{ setSpeed: (speed: number) => void } | null>(null)
-
-  useEffect(() => {
-    lottieRef.current?.setSpeed(0.65)
-  }, [])
+  const { View } = useLottie(
+    {
+      animationData: loadingAnimation,
+      loop: true,
+      autoplay: true,
+    },
+    {
+      height: '100%',
+      width: '100%',
+    },
+  )
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden  px-4">
-      <div className="pointer-events-none absolute inset-0 " />
-
-      <div className="relative w-full max-w-xl overflow-hidden ">
-        <div className="relative flex flex-col items-center text-center">
-          <div className="relative flex h-72 w-72 items-center justify-center md:h-80 md:w-80">
-            <div className="absolute inset-3 rounded-full " />
-            <Lottie
-              lottieRef={lottieRef}
-              animationData={contractAnimation}
-              loop
-              autoplay
-              className="relative h-full w-full scale-110"
-            />
-          </div>
-        </div>
+    <div className="relative grid min-h-screen place-items-center bg-slate-50 overflow-hidden px-5">
+      {/* Decorative background */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-1/4 left-1/4 h-64 w-64 rounded-full bg-emerald-200/40 blur-[100px]" 
+        />
+        <motion.div 
+          animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          className="absolute bottom-1/4 right-1/4 h-64 w-64 rounded-full bg-teal-200/40 blur-[100px]" 
+        />
       </div>
+
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="relative flex flex-col items-center justify-center p-8 rounded-3xl"
+      >
+        <div className="h-64 w-64 sm:h-80 sm:w-80 drop-shadow-xl">{View}</div>
+        
+        {/* Loading Text */}
+        <div className="mt-4 flex items-center gap-2">
+          <span className="text-sm font-extrabold tracking-widest text-emerald-700 uppercase">Yuklanmoqda</span>
+          <span className="flex gap-1">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce" style={{ animationDelay: '300ms' }} />
+          </span>
+        </div>
+      </motion.div>
     </div>
   )
 }

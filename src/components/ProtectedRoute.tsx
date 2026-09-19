@@ -1,14 +1,16 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import IsLoading from './isLoading'
-import { useAuth } from '../hooks/useAuth'
+import useContextPro from '../hooks/useContextPro'
+import type { UserRole } from '../types'
 
 interface ProtectedRouteProps {
   children: ReactNode
+  roles?: UserRole[]
 }
 
-function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth()
+function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
+  const { user, isAuthenticated, isLoading } = useContextPro()
   const location = useLocation()
 
   if (isLoading) {
@@ -17,6 +19,10 @@ function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
+
+  if (roles?.length && user && !roles.includes(user.role)) {
+    return <Navigate to={user.role === 'admin' ? '/admin' : '/provider'} replace />
   }
 
   return <>{children}</>

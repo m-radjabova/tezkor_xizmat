@@ -3,10 +3,10 @@ import { createRoot } from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
 import { HelmetProvider } from 'react-helmet-async'
+import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import AppContent from './AppContent'
-import { AuthProvider } from './context/AuthContext'
-import { PreferencesProvider } from './context/PreferencesContext'
+import App from './App'
+import CreateContextPro from './hooks/CreateContextPro'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -23,11 +23,10 @@ createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AuthProvider>
-            <PreferencesProvider>
-              <AppContent />
-            </PreferencesProvider>
-          </AuthProvider>
+          <CreateContextPro>
+            <App />
+            <ToastContainer position="top-right" autoClose={2800} newestOnTop closeButton={false} />
+          </CreateContextPro>
         </BrowserRouter>
       </QueryClientProvider>
     </HelmetProvider>
