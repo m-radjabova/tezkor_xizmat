@@ -5,7 +5,6 @@ import SendIcon from '@mui/icons-material/Send'
 import YouTubeIcon from '@mui/icons-material/YouTube'
 import TelegramIcon from '@mui/icons-material/Telegram'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
-import { motion } from 'framer-motion'
 
 function Footer() {
   const currentYear = new Date().getFullYear()
@@ -36,36 +35,15 @@ function Footer() {
       id="aloqa"
       className="relative mt-24 overflow-hidden bg-slate-950 text-slate-300"
     >
-      {/* === Animated Gradient Background === */}
+      {/* === Statik background === */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950" />
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-emerald-500/20 blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-teal-500/20 blur-[120px]"
-        />
-        <motion.div
-          animate={{
-            x: [0, 100, 0],
-            y: [0, -50, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/3 left-1/2 h-[300px] w-[300px] rounded-full bg-cyan-500/10 blur-[100px]"
-        />
+        <div className="absolute -top-40 -left-40 h-[500px] w-[500px] rounded-full bg-emerald-500/15 blur-3xl" />
+        <div className="absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-teal-500/15 blur-3xl" />
+        <div className="absolute top-1/3 left-1/2 h-[300px] w-[300px] rounded-full bg-cyan-500/10 blur-3xl" />
       </div>
 
-      {/* === Grid Pattern Overlay === */}
+      {/* === Grid pattern === */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{
@@ -75,20 +53,14 @@ function Footer() {
         }}
       />
 
-      {/* === Top Glow Line === */}
+      {/* === Top glow line === */}
       <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
 
-      {/* === Main Content === */}
+      {/* === Main content === */}
       <div className="relative z-10 mx-auto max-w-7xl px-5 pt-20 pb-12 lg:px-8">
         {/* CTA Banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="mb-20 relative overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-8 lg:p-12 backdrop-blur-xl"
-        >
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-emerald-500/20 blur-3xl" />
+        <div className="footer-fade footer-fade-1 relative mb-20 overflow-hidden rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent p-8 lg:p-12">
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-emerald-500/15 blur-3xl" />
           <div className="relative flex flex-col items-start justify-between gap-6 lg:flex-row lg:items-center">
             <div>
               <h2 className="text-3xl font-black tracking-tight text-white lg:text-4xl">
@@ -98,40 +70,31 @@ function Footer() {
                 Minglab foydalanuvchilar orasida o'z biznesingizni tanishtiring va yangi mijozlarga ega bo'ling.
               </p>
             </div>
-            <motion.a
-              whileHover={{ scale: 1.05, x: 5 }}
-              whileTap={{ scale: 0.95 }}
+            <a
               href="/register"
-              className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-7 py-4 font-bold text-white shadow-lg shadow-emerald-500/30 transition-shadow hover:shadow-xl hover:shadow-emerald-500/40"
+              className="group flex items-center gap-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-7 py-4 font-bold text-white shadow-md transition-colors duration-200 hover:from-emerald-400 hover:to-teal-400"
             >
               Boshlash
-              <ArrowForwardIcon className="transition-transform group-hover:translate-x-1" />
-            </motion.a>
+              <ArrowForwardIcon className="transition-transform duration-200 group-hover:translate-x-1" />
+            </a>
           </div>
-        </motion.div>
+        </div>
 
-        {/* === Grid Sections === */}
+        {/* === Grid sections === */}
         <div className="grid gap-12 lg:grid-cols-[1.6fr_1fr_1fr_1.6fr]">
-          {/* Brand Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col gap-6"
-          >
+          {/* Brand */}
+          <div className="footer-fade footer-fade-2 flex flex-col gap-6">
             <div className="flex items-center gap-3">
-              <motion.div
-                whileHover={{ rotate: 12, scale: 1.1 }}
-                transition={{ type: 'spring', stiffness: 300 }}
-                className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-xl shadow-emerald-500/40"
-              >
+              <div className="relative grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-md">
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent" />
                 <LocationOnIcon fontSize="medium" className="relative z-10" />
-              </motion.div>
+              </div>
               <div>
                 <span className="block text-2xl font-black tracking-tight text-white">
-                  Yaqin<span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Xizmat</span>
+                  Yaqin
+                  <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">
+                    Xizmat
+                  </span>
                 </span>
                 <span className="text-xs font-semibold uppercase tracking-widest text-emerald-400/80">
                   Local Services Platform
@@ -140,37 +103,30 @@ function Footer() {
             </div>
 
             <p className="max-w-[300px] text-[15px] leading-relaxed text-slate-400">
-              Mahalliy bizneslar va xizmatlarni topish endi juda oson. O'z xizmatingizni taklif qiling yoki keraklisini toping.
+              Mahalliy bizneslar va xizmatlarni topish endi juda oson. O'z xizmatingizni taklif qiling yoki
+              keraklisini toping.
             </p>
 
-            {/* Social Icons */}
+            {/* Social icons */}
             <div className="flex gap-3">
               {socials.map((social, i) => (
-                <motion.a
+                <a
                   key={i}
                   href={social.href}
                   aria-label={social.label}
-                  whileHover={{ y: -4, scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                  transition={{ type: 'spring', stiffness: 400 }}
-                  className={`group relative grid h-11 w-11 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/5 text-slate-400 backdrop-blur-sm transition-all hover:border-transparent hover:text-white`}
+                  className="group relative grid h-11 w-11 place-items-center overflow-hidden rounded-xl border border-white/10 bg-white/5 text-slate-400 transition-colors duration-200 hover:border-transparent hover:text-white"
                 >
                   <div
-                    className={`absolute inset-0 bg-gradient-to-br ${social.color} opacity-0 transition-opacity group-hover:opacity-100`}
+                    className={`absolute inset-0 bg-gradient-to-br ${social.color} opacity-0 transition-opacity duration-200 group-hover:opacity-100`}
                   />
                   <span className="relative z-10">{social.icon}</span>
-                </motion.a>
+                </a>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* Main Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
+          {/* Main links */}
+          <div className="footer-fade footer-fade-3">
             <h3 className="mb-6 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-emerald-400">
               <span className="h-px w-6 bg-emerald-400" />
               Asosiy
@@ -180,22 +136,17 @@ function Footer() {
                 <a
                   key={item.label}
                   href={item.path}
-                  className="group flex items-center gap-2 text-[15px] font-semibold text-slate-400 transition-colors hover:text-white"
+                  className="group flex items-center gap-2 text-[15px] font-semibold text-slate-400 transition-colors duration-200 hover:text-white"
                 >
-                  <ArrowForwardIcon className="h-4 w-4 -translate-x-2 opacity-0 text-emerald-400 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                  <ArrowForwardIcon className="h-4 w-4 -translate-x-2 opacity-0 text-emerald-400 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
                   {item.label}
                 </a>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          {/* User Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
+          {/* User links */}
+          <div className="footer-fade footer-fade-4">
             <h3 className="mb-6 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-emerald-400">
               <span className="h-px w-6 bg-emerald-400" />
               Foydalanuvchi
@@ -205,30 +156,24 @@ function Footer() {
                 <a
                   key={item.label}
                   href={item.path}
-                  className="group flex items-center gap-2 text-[15px] font-semibold text-slate-400 transition-colors hover:text-white"
+                  className="group flex items-center gap-2 text-[15px] font-semibold text-slate-400 transition-colors duration-200 hover:text-white"
                 >
-                  <ArrowForwardIcon className="h-4 w-4 -translate-x-2 opacity-0 text-emerald-400 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                  <ArrowForwardIcon className="h-4 w-4 -translate-x-2 opacity-0 text-emerald-400 transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100" />
                   {item.label}
                 </a>
               ))}
             </div>
-          </motion.div>
+          </div>
 
           {/* Newsletter */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-            className="relative"
-          >
+          <div className="footer-fade footer-fade-5 relative">
             <h3 className="mb-6 flex items-center gap-2 text-sm font-black uppercase tracking-widest text-emerald-400">
               <span className="h-px w-6 bg-emerald-400" />
               Newsletter
             </h3>
 
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-xl">
-              <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-emerald-500/20 blur-3xl" />
+            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-6">
+              <div className="absolute -top-16 -right-16 h-40 w-40 rounded-full bg-emerald-500/15 blur-3xl" />
 
               <h4 className="relative z-10 text-lg font-extrabold text-white">
                 Yangiliklardan xabardor bo'ling
@@ -241,28 +186,29 @@ function Footer() {
                 <div className="relative">
                   <input
                     type="email"
-                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm font-semibold text-white outline-none transition-all placeholder:text-slate-500 focus:border-emerald-400/50 focus:bg-white/10 focus:ring-4 focus:ring-emerald-400/10"
+                    className="w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3.5 text-sm font-semibold text-white outline-none transition-colors duration-200 placeholder:text-slate-500 focus:border-emerald-400/50 focus:bg-white/10"
                     placeholder="Email manzilingiz"
                     required
                   />
                 </div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
                   type="submit"
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/30 transition-shadow hover:shadow-xl hover:shadow-emerald-500/40"
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3.5 text-sm font-bold text-white shadow-md transition-colors duration-200 hover:from-emerald-400 hover:to-teal-400"
                 >
                   Obuna bo'lish
-                  <SendIcon fontSize="small" className="transition-transform group-hover:translate-x-1 group-hover:-translate-y-0.5" />
-                </motion.button>
+                  <SendIcon
+                    fontSize="small"
+                    className="transition-transform duration-200 group-hover:translate-x-1 group-hover:-translate-y-0.5"
+                  />
+                </button>
               </form>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
-      {/* === Bottom Bar === */}
-      <div className="relative border-t border-white/10 bg-slate-950/50 backdrop-blur-md">
+      {/* === Bottom bar === */}
+      <div className="relative border-t border-white/10 bg-slate-950/80">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-5 py-6 text-sm font-semibold text-slate-500 sm:flex-row lg:px-8">
           <p className="flex items-center gap-2">
             <span>© {currentYear}</span>
@@ -271,11 +217,11 @@ function Footer() {
             <span>Barcha huquqlar himoyalangan</span>
           </p>
           <div className="flex items-center gap-6">
-            <a href="#" className="transition-colors hover:text-emerald-400">Shartlar</a>
+            <a href="#" className="transition-colors duration-200 hover:text-emerald-400">Shartlar</a>
             <span className="h-4 w-px bg-white/10" />
-            <a href="#" className="transition-colors hover:text-emerald-400">Maxfiylik</a>
+            <a href="#" className="transition-colors duration-200 hover:text-emerald-400">Maxfiylik</a>
             <span className="h-4 w-px bg-white/10" />
-            <a href="#" className="transition-colors hover:text-emerald-400">Cookies</a>
+            <a href="#" className="transition-colors duration-200 hover:text-emerald-400">Cookies</a>
           </div>
         </div>
       </div>

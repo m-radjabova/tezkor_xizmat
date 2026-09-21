@@ -565,9 +565,9 @@ function ProviderBusinesses() {
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 text-slate-950 lg:flex">
       <AdminSidebar />
 
-      <main className="min-w-0 flex-1 overflow-x-hidden px-4 pb-10 pt-20 sm:px-6 lg:px-10 lg:pt-0">
+      <main className="min-w-0 flex-1 overflow-x-hidden px-4 pb-10 pt-[100px] sm:px-6 lg:px-10">
         {/* HEADER */}
-        <header className="sticky top-0 z-20 -mx-4 mb-6 flex min-h-[76px] items-center gap-3 border-b border-slate-200/70 bg-white/80 px-4 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-10 lg:px-10">
+        <header className="fixed left-0 right-0 top-0 z-20 flex min-h-[76px] items-center gap-3 border-b border-slate-200/70 bg-white/95 px-4 pl-16 backdrop-blur-xl sm:px-6 sm:pl-16 lg:left-[300px] lg:px-10 lg:pl-10">
           <div className="mr-auto">
             <h1 className="text-xl font-black tracking-tight text-slate-900 sm:text-2xl">
               {isAdding

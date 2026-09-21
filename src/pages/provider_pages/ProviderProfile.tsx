@@ -121,8 +121,8 @@ function ProviderProfile() {
   return (
     <div className="min-h-screen bg-[#f6f8fb] text-slate-950 lg:flex">
       <AdminSidebar />
-      <main className="min-w-0 flex-1 px-4 pb-6 pt-20 sm:px-6 lg:px-8 lg:pt-0">
-        <header className="sticky top-0 z-20 -mx-4 mb-5 flex min-h-[70px] items-center gap-4 border-b border-slate-100 bg-white/90 px-4 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <main className="min-w-0 flex-1 px-4 pb-6 pt-24 sm:px-6 lg:px-8">
+        <header className="fixed left-0 right-0 top-0 z-20 flex min-h-[70px] items-center gap-4 border-b border-slate-100 bg-white/95 px-4 pl-16 backdrop-blur sm:px-6 sm:pl-16 lg:left-[300px] lg:px-8 lg:pl-8">
           <h1 className="mr-auto text-2xl font-black tracking-tight">Profil</h1>
           <button className="relative grid h-11 w-11 place-items-center rounded-[8px] bg-white text-slate-700 shadow-sm">
             <HiBell className="h-5 w-5" />

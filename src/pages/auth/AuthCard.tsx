@@ -53,9 +53,8 @@ function AuthField({
         </label>
       )}
       <div className="group relative">
-        <label className="relative flex h-[54px] items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-300 focus-within:border-emerald-500 focus-within:shadow-[0_0_0_4px_rgba(16,185,129,0.1)] hover:border-slate-300">
-          {/* Icon */}
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-500 transition-all duration-300 group-focus-within:bg-emerald-50 group-focus-within:text-emerald-600">
+        <label className="relative flex h-[54px] items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-colors duration-200 focus-within:border-emerald-500 hover:border-slate-300">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-500 transition-colors duration-200 group-focus-within:bg-emerald-50 group-focus-within:text-emerald-600">
             {icon}
           </span>
 
@@ -79,27 +78,29 @@ function AuthField({
 function SegmentedControl({
   mode,
   onChange,
+  isRegister,
+  disableProvider,
 }: {
   mode: AuthMode
   onChange: (mode: AuthMode) => void
+  isRegister: boolean
+  disableProvider?: boolean
 }) {
   return (
     <div className="relative mt-7 grid h-[52px] grid-cols-2 gap-1 rounded-2xl border border-slate-200 bg-slate-50/80 p-1">
-      {/* Sliding indicator */}
-      <motion.div
-        layout
-        transition={{ type: 'spring', stiffness: 400, damping: 32 }}
-        className={`absolute inset-y-1 w-[calc(50%-4px)] rounded-xl shadow-sm ${
+      {/* CSS-only sliding indicator */}
+      <div
+        className={`pointer-events-none absolute inset-y-1 w-[calc(50%-4px)] rounded-xl transition-all duration-300 ease-out ${
           mode === 'customer'
-            ? 'left-1 bg-white shadow-slate-200/60'
-            : 'left-[calc(50%+2px)] bg-gradient-to-br from-emerald-500 to-teal-500 shadow-emerald-500/30'
+            ? 'left-1 bg-white shadow-sm shadow-slate-200/60'
+            : 'left-[calc(50%+2px)] bg-gradient-to-br from-emerald-500 to-teal-500 shadow-sm shadow-emerald-500/30'
         }`}
       />
 
       <button
         type="button"
         onClick={() => onChange('customer')}
-        className={`relative z-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors duration-300 ${
+        className={`relative z-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors duration-200 ${
           mode === 'customer'
             ? 'text-slate-900'
             : 'text-slate-500 hover:text-slate-700'
@@ -110,15 +111,21 @@ function SegmentedControl({
       </button>
       <button
         type="button"
-        onClick={() => onChange('provider')}
-        className={`relative z-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors duration-300 ${
-          mode === 'provider'
+        onClick={() => {
+          if (!disableProvider) onChange('provider')
+        }}
+        disabled={disableProvider}
+        title={disableProvider ? "Mijoz ro'yxati faqat Google orqali" : undefined}
+        className={`relative z-10 flex items-center justify-center gap-2 rounded-xl text-sm font-bold transition-colors duration-200 ${
+          disableProvider
+            ? 'cursor-not-allowed text-slate-400 opacity-50'
+            : mode === 'provider'
             ? 'text-white'
             : 'text-slate-500 hover:text-slate-700'
         }`}
       >
         <BusinessIcon sx={{ fontSize: 18 }} />
-        Xizmat ko'rsatuvchi
+        {isRegister ? 'Xizmat egasi' : "Xizmat ko'rsatuvchi"}
       </button>
     </div>
   )
@@ -135,30 +142,25 @@ function GoogleButton({
   label?: string
 }) {
   return (
-    <motion.button
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+    <button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="group relative flex h-[54px] w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white text-[15px] font-extrabold text-slate-800 shadow-sm transition-all duration-300 hover:border-emerald-300 hover:shadow-[0_10px_30px_-10px_rgba(16,185,129,0.3)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="group relative flex h-[54px] w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white text-[15px] font-extrabold text-slate-800 shadow-sm transition-all duration-200 hover:border-emerald-300 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60 active:scale-[0.99]"
     >
-      {/* Shine sweep */}
-      <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-emerald-50/80 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-
       <GoogleIcon
-        className="relative transition-transform duration-300 group-hover:scale-110"
+        className="transition-transform duration-200 group-hover:scale-105"
         sx={{ fontSize: 22 }}
       />
-      <span className="relative">{label}</span>
-    </motion.button>
+      <span>{label}</span>
+    </button>
   )
 }
 
 /* ==================== MAIN COMPONENT ==================== */
 function AuthCard({ screen }: AuthCardProps) {
   const isRegister = screen === 'register'
-  const [mode, setMode] = useState<AuthMode>(isRegister ? 'provider' : 'customer')
+  const [mode, setMode] = useState<AuthMode>('customer')
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [organizationName, setOrganizationName] = useState('')
@@ -174,7 +176,9 @@ function AuthCard({ screen }: AuthCardProps) {
   const navigate = useNavigate()
 
   const subtitle = isRegister
-    ? "Xizmat ko'rsatuvchi hisobini yarating"
+    ? mode === 'customer'
+      ? "Google orqali bir zumda hisob yarating"
+      : "Xizmat ko'rsatuvchi hisobini yarating"
     : "Hisobingizga kirish uchun ma'lumotlaringizni kiriting"
 
   const primaryLabel = useMemo(() => {
@@ -182,7 +186,6 @@ function AuthCard({ screen }: AuthCardProps) {
     return isRegister ? "Ro'yxatdan o'tish" : 'Kirish'
   }, [isRegister, isSubmitting])
 
-  /* Password strength */
   const passwordStrength = useMemo(() => {
     if (!password) return 0
     let score = 0
@@ -245,6 +248,7 @@ function AuthCard({ screen }: AuthCardProps) {
       const result = await signInWithPopup(firebaseaaAuth, googleProvider)
       const idToken = await result.user.getIdToken()
       await loginWithGoogle({ id_token: idToken })
+      if (isRegister) return
       navigate('/', { replace: true })
     } catch (error) {
       showErrorToast(getErrorMessage(error, 'Google orqali kirishda xatolik yuz berdi'))
@@ -255,21 +259,11 @@ function AuthCard({ screen }: AuthCardProps) {
 
   return (
     <div className="relative flex min-h-screen flex-1 items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50/30 px-5 py-10 sm:px-8 lg:px-12">
-      {/* ============ DECORATIVE BACKGROUND ============ */}
+      {/* ============ DECORATIVE BACKGROUND (CSS-only) ============ */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        {/* Glow orbs */}
-        <motion.div
-          animate={{ y: [0, -25, 0], x: [0, 15, 0] }}
-          transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -top-40 left-1/4 h-[420px] w-[420px] rounded-full bg-emerald-200/50 blur-[130px]"
-        />
-        <motion.div
-          animate={{ y: [0, 25, 0], x: [0, -15, 0] }}
-          transition={{ duration: 11, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute -bottom-40 right-1/4 h-[420px] w-[420px] rounded-full bg-teal-200/50 blur-[130px]"
-        />
+        <div className="absolute -top-40 left-1/4 h-[360px] w-[360px] rounded-full bg-emerald-200/40 blur-[90px]" />
+        <div className="absolute -bottom-40 right-1/4 h-[360px] w-[360px] rounded-full bg-teal-200/40 blur-[90px]" />
 
-        {/* Grid */}
         <div
           className="absolute inset-0 opacity-[0.035]"
           style={{
@@ -280,57 +274,29 @@ function AuthCard({ screen }: AuthCardProps) {
             WebkitMaskImage: 'radial-gradient(ellipse at center, black 40%, transparent 80%)',
           }}
         />
-
-        {/* Floating particles */}
-        {[...Array(14)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute h-1 w-1 rounded-full bg-emerald-400/50"
-            style={{
-              left: `${(i * 37) % 100}%`,
-              top: `${(i * 61) % 100}%`,
-            }}
-            animate={{ y: [0, -60, 0], opacity: [0, 1, 0] }}
-            transition={{
-              duration: 5 + (i % 4),
-              repeat: Infinity,
-              delay: (i * 3) % 6,
-              ease: 'easeInOut',
-            }}
-          />
-        ))}
       </div>
 
       {/* ============ CARD WRAPPER ============ */}
       <motion.div
-        initial={{ opacity: 0, y: 30, scale: 0.96 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: 'easeOut' }}
         className="relative w-full max-w-[520px]"
       >
         {/* Outer glow */}
         <div className="pointer-events-none absolute -inset-2 rounded-[36px] bg-gradient-to-r from-emerald-400/20 via-teal-300/10 to-emerald-400/20 blur-2xl" />
 
         {/* ============ MAIN CARD ============ */}
-        <div className="relative overflow-hidden rounded-[32px] border border-white/80 bg-white/90 px-6 py-8 shadow-[0_30px_90px_-25px_rgba(15,23,42,0.25)] backdrop-blur-xl sm:px-9 sm:py-10">
+        <div className="relative overflow-hidden rounded-[32px] border border-white/80 bg-white/95 px-6 py-8 shadow-[0_30px_90px_-25px_rgba(15,23,42,0.25)] sm:px-9 sm:py-10">
           {/* Top gradient line */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-400/60 to-transparent" />
 
-          {/* Inner subtle glow */}
-          <div className="pointer-events-none absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full bg-emerald-400/10 blur-3xl" />
-
           {/* ============ HEADER ============ */}
           <div className="relative text-center">
-            {/* Small badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-emerald-700"
-            >
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-emerald-700">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
               {isRegister ? "Yangi hisob" : 'Xush kelibsiz'}
-            </motion.div>
+            </div>
 
             <h2 className="text-[28px] font-black leading-tight tracking-tight text-slate-950 sm:text-[34px]">
               {isRegister ? (
@@ -354,37 +320,52 @@ function AuthCard({ screen }: AuthCardProps) {
             </p>
           </div>
 
-          {/* ============ SEGMENTED CONTROL ============ */}
-          {!isRegister && <SegmentedControl mode={mode} onChange={setMode} />}
+          {/* ============ SEGMENTED CONTROL (login + register) ============ */}
+          <SegmentedControl
+            mode={mode}
+            onChange={setMode}
+            isRegister={isRegister}
+            disableProvider={isRegister}
+          />
 
           {/* ============ CONTENT (Animated) ============ */}
-          <AnimatePresence mode="wait">
-            {mode === 'customer' && !isRegister ? (
-              /* ---------- CUSTOMER LOGIN ---------- */
+          <AnimatePresence mode="wait" initial={false}>
+            {mode === 'customer' ? (
+              /* ---------- CUSTOMER (login + register) ---------- */
               <motion.div
                 key="customer"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="mt-7 space-y-4"
               >
-                <GoogleButton onClick={handleGoogle} disabled={isSubmitting} />
+                <GoogleButton
+                  onClick={handleGoogle}
+                  disabled={isSubmitting}
+                  label={
+                    isRegister
+                      ? "Google orqali ro'yxatdan o'tish"
+                      : 'Google orqali kirish'
+                  }
+                />
 
                 <div className="relative py-1 text-center">
                   <p className="text-xs font-bold text-slate-400">
-                    Faqat Google orqali tez va oson kirish
+                    {isRegister
+                      ? "Google orqali bir zumda hisob yarating"
+                      : 'Faqat Google orqali tez va oson kirish'}
                   </p>
                 </div>
               </motion.div>
             ) : (
-              /* ---------- PROVIDER (LOGIN + REGISTER) ---------- */
+              /* ---------- PROVIDER (login + register) ---------- */
               <motion.form
                 key="provider"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
                 className="mt-7 space-y-4"
                 onSubmit={handleProviderSubmit}
               >
@@ -426,8 +407,8 @@ function AuthCard({ screen }: AuthCardProps) {
                         Xizmat kategoriyasi
                       </label>
                       <div className="group relative">
-                        <label className="relative flex h-[54px] items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-all duration-300 focus-within:border-emerald-500 focus-within:shadow-[0_0_0_4px_rgba(16,185,129,0.1)] hover:border-slate-300">
-                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-500 transition-all duration-300 group-focus-within:bg-emerald-50 group-focus-within:text-emerald-600">
+                        <label className="relative flex h-[54px] items-center gap-3 overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 text-slate-400 shadow-[0_1px_2px_rgba(15,23,42,0.03)] transition-colors duration-200 focus-within:border-emerald-500 hover:border-slate-300">
+                          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-50 text-slate-500 transition-colors duration-200 group-focus-within:bg-emerald-50 group-focus-within:text-emerald-600">
                             <BusinessIcon sx={{ fontSize: 18 }} />
                           </span>
                           <select
@@ -445,7 +426,6 @@ function AuthCard({ screen }: AuthCardProps) {
                               </option>
                             ))}
                           </select>
-                          {/* Dropdown arrow */}
                           <svg
                             className="pointer-events-none h-4 w-4 shrink-0 text-slate-400 transition-colors group-focus-within:text-emerald-500"
                             fill="none"
@@ -485,7 +465,7 @@ function AuthCard({ screen }: AuthCardProps) {
                     <button
                       type="button"
                       onClick={() => setShowPassword((value) => !value)}
-                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition-all duration-300 hover:bg-emerald-50 hover:text-emerald-600"
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-emerald-50 hover:text-emerald-600"
                       aria-label={showPassword ? 'Parolni yashirish' : "Parolni ko'rsatish"}
                     >
                       {showPassword ? (
@@ -498,57 +478,50 @@ function AuthCard({ screen }: AuthCardProps) {
                 />
 
                 {/* Password strength */}
-                <AnimatePresence>
-                  {isRegister && password && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-2 overflow-hidden"
-                    >
-                      <div className="flex gap-1.5">
-                        {[0, 1, 2, 3].map((i) => (
-                          <div
-                            key={i}
-                            className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                              i < passwordStrength ? strengthColor : 'bg-slate-200'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-xs font-bold text-slate-500">
-                          Parol darajasi:{' '}
-                          <span
-                            className={
-                              passwordStrength >= 3
-                                ? 'text-emerald-600'
-                                : passwordStrength >= 2
-                                  ? 'text-amber-600'
-                                  : 'text-rose-500'
-                            }
-                          >
-                            {strengthLabel}
-                          </span>
-                        </p>
-                        {passwordStrength >= 3 && (
-                          <CheckCircleIcon sx={{ fontSize: 14 }} className="text-emerald-500" />
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {isRegister && password && (
+                  <div className="space-y-2">
+                    <div className="flex gap-1.5">
+                      {[0, 1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className={`h-1.5 flex-1 rounded-full transition-colors duration-300 ${
+                            i < passwordStrength ? strengthColor : 'bg-slate-200'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold text-slate-500">
+                        Parol darajasi:{' '}
+                        <span
+                          className={
+                            passwordStrength >= 3
+                              ? 'text-emerald-600'
+                              : passwordStrength >= 2
+                                ? 'text-amber-600'
+                                : 'text-rose-500'
+                          }
+                        >
+                          {strengthLabel}
+                        </span>
+                      </p>
+                      {passwordStrength >= 3 && (
+                        <CheckCircleIcon sx={{ fontSize: 14 }} className="text-emerald-500" />
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Remember + Forgot */}
                 {!isRegister && (
                   <div className="flex items-center justify-between pt-1">
-                    <label className="group flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-slate-600 transition hover:text-slate-800">
+                    <label className="group flex cursor-pointer items-center gap-2.5 text-sm font-semibold text-slate-600 transition-colors hover:text-slate-800">
                       <span className="relative grid h-5 w-5 place-items-center">
                         <input
                           checked={remember}
                           onChange={(event) => setRemember(event.target.checked)}
                           type="checkbox"
-                          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 bg-white transition-all duration-200 checked:border-emerald-500 checked:bg-emerald-500 hover:border-emerald-400"
+                          className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 bg-white transition-colors duration-200 checked:border-emerald-500 checked:bg-emerald-500 hover:border-emerald-400"
                         />
                         <svg
                           viewBox="0 0 24 24"
@@ -566,7 +539,7 @@ function AuthCard({ screen }: AuthCardProps) {
                     </label>
                     <button
                       type="button"
-                      className="text-sm font-extrabold text-emerald-700 underline-offset-4 transition hover:text-emerald-800 hover:underline"
+                      className="text-sm font-extrabold text-emerald-700 underline-offset-4 transition-colors hover:text-emerald-800 hover:underline"
                     >
                       Parolni unutdingizmi?
                     </button>
@@ -574,60 +547,37 @@ function AuthCard({ screen }: AuthCardProps) {
                 )}
 
                 {/* Submit */}
-                <motion.button
-                  whileHover={{ y: -2 }}
-                  whileTap={{ scale: 0.98 }}
+                <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="group/btn relative flex h-[54px] w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-[15px] font-extrabold text-white shadow-[0_14px_30px_-8px_rgba(4,120,87,0.5)] transition-all duration-300 hover:from-emerald-400 hover:to-teal-400 hover:shadow-[0_20px_40px_-8px_rgba(4,120,87,0.6)] disabled:cursor-not-allowed disabled:opacity-70"
+                  className="group/btn relative flex h-[54px] w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-[15px] font-extrabold text-white shadow-[0_14px_30px_-8px_rgba(4,120,87,0.5)] transition-all duration-200 hover:from-emerald-400 hover:to-teal-400 hover:shadow-[0_18px_36px_-8px_rgba(4,120,87,0.55)] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
                 >
-                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 group-hover/btn:translate-x-full" />
                   {isSubmitting ? (
                     <>
-                      <span className="relative h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
-                      <span className="relative">{primaryLabel}</span>
+                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+                      <span>{primaryLabel}</span>
                     </>
                   ) : (
                     <>
-                      <span className="relative">{primaryLabel}</span>
+                      <span>{primaryLabel}</span>
                       <ArrowForwardIcon
                         sx={{ fontSize: 20 }}
-                        className="relative transition-transform duration-300 group-hover/btn:translate-x-1"
+                        className="transition-transform duration-200 group-hover/btn:translate-x-1"
                       />
                     </>
                   )}
-                </motion.button>
+                </button>
               </motion.form>
             )}
           </AnimatePresence>
 
-          {/* Provider mode - customer alternative (login only) */}
-          {!isRegister && mode === 'provider' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.15 }}
-            >
-              <div className="my-5 flex items-center gap-4 text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
-                <span className="h-px flex-1 bg-slate-200" />
-                yoki
-                <span className="h-px flex-1 bg-slate-200" />
-              </div>
-
-              <GoogleButton
-                onClick={() => setMode('customer')}
-                label="Google orqali mijoz sifatida kirish"
-              />
-            </motion.div>
-          )}
-
-          {/* Footer */}
-          {(isRegister || mode === 'provider') && (
+          {/* ============ FOOTER (faqat provider rejimida) ============ */}
+          {mode === 'provider' && (
             <p className="mt-7 text-center text-sm font-semibold text-slate-500">
               {isRegister ? 'Hisobingiz bormi?' : "Hisobingiz yo'qmi?"}{' '}
               <Link
                 to={isRegister ? '/login' : '/register'}
-                className="font-extrabold text-emerald-700 underline-offset-4 transition hover:text-emerald-800 hover:underline"
+                className="font-extrabold text-emerald-700 underline-offset-4 transition-colors hover:text-emerald-800 hover:underline"
               >
                 {isRegister ? 'Kirish' : "Ro'yxatdan o'tish"}
               </Link>

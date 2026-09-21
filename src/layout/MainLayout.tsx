@@ -1,13 +1,15 @@
-import { Outlet } from "react-router-dom";
+import { Outlet } from 'react-router-dom'
+import Footer from '../components/landing_page/Footer'
+import Header from '../components/landing_page/Header'
 
 export default function MainLayout() {
   return (
-    <div className="relative min-h-screen overflow-x-hidden text-[#fff6f4]">
-      <div className="relative z-10 flex min-h-screen flex-col">
-        <div className="flex-1">
-          <Outlet />
-        </div>
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-white text-slate-950">
+      <Header />
+      <div className="flex-1">
+        <Outlet />
       </div>
+      <Footer />
     </div>
-  );
+  )
 }

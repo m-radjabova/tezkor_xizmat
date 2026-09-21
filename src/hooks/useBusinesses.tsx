@@ -10,7 +10,8 @@ interface UseBusinessesParams {
   limit?: number
   latitude?: number
   longitude?: number
-  sortBy?: 'newest' | 'distance'
+  sortBy?: 'newest' | 'distance' | 'rating'
+  minRating?: number
 }
 
 interface BusinessesPage {
@@ -26,9 +27,10 @@ async function getBusinessesRequest({
   latitude,
   longitude,
   sortBy,
+  minRating,
   offset,
 }: Required<Pick<UseBusinessesParams, 'limit'>> &
-  Pick<UseBusinessesParams, 'categoryId' | 'search' | 'latitude' | 'longitude' | 'sortBy'> & { offset: number }) {
+  Pick<UseBusinessesParams, 'categoryId' | 'search' | 'latitude' | 'longitude' | 'sortBy' | 'minRating'> & { offset: number }) {
   const params: Record<string, string | number> = {
     limit,
     offset,
@@ -43,6 +45,7 @@ async function getBusinessesRequest({
   } else if (sortBy) {
     params.sort_by = sortBy
   }
+  if (minRating) params.min_rating = minRating
 
   const { data } = await apiClient.get<Business[]>('/businesses', { params })
 
@@ -60,11 +63,12 @@ export function useBusinesses({
   latitude,
   longitude,
   sortBy,
+  minRating,
 }: UseBusinessesParams = {}) {
   const normalizedSearch = search.trim()
 
   const query = useInfiniteQuery({
-    queryKey: ['businesses', { categoryId, search: normalizedSearch, limit, latitude, longitude, sortBy }],
+    queryKey: ['businesses', { categoryId, search: normalizedSearch, limit, latitude, longitude, sortBy, minRating }],
     initialPageParam: 0,
     queryFn: ({ pageParam }) =>
       getBusinessesRequest({
@@ -74,6 +78,7 @@ export function useBusinesses({
         latitude,
         longitude,
         sortBy,
+        minRating,
         offset: pageParam,
       }),
     getNextPageParam: (lastPage) => (lastPage.hasMore ? lastPage.nextOffset : undefined),

@@ -27,3 +27,183 @@ button, link{
 .category-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+
+/* Testimonials fade-in */
+@keyframes testimonialsFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.testimonials-fade {
+  opacity: 0;
+  animation: testimonialsFade 0.5s ease-out forwards;
+}
+
+/* Kartalar uchun */
+@keyframes testimonialCardFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.testimonial-card {
+  opacity: 0;
+  animation: testimonialCardFade 0.45s ease-out forwards;
+}
+
+.testimonial-card:nth-child(1) { animation-delay: 0.05s; }
+.testimonial-card:nth-child(2) { animation-delay: 0.12s; }
+.testimonial-card:nth-child(3) { animation-delay: 0.19s; }
+.testimonial-card:nth-child(4) { animation-delay: 0.26s; }
+.testimonial-card:nth-child(5) { animation-delay: 0.33s; }
+.testimonial-card:nth-child(6) { animation-delay: 0.40s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .testimonials-fade,
+  .testimonial-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Footer fade-in animatsiyalari */
+@keyframes footerFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.footer-fade {
+  opacity: 0;
+  animation: footerFade 0.6s ease-out forwards;
+  will-change: opacity, transform;
+}
+
+.footer-fade-1 { animation-delay: 0.05s; }
+.footer-fade-2 { animation-delay: 0.10s; }
+.footer-fade-3 { animation-delay: 0.15s; }
+.footer-fade-4 { animation-delay: 0.20s; }
+.footer-fade-5 { animation-delay: 0.25s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-fade {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Footer fade-in animatsiyalari */
+@keyframes footerFade {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.footer-fade {
+  opacity: 0;
+  animation: footerFade 0.6s ease-out forwards;
+  will-change: opacity, transform;
+}
+
+.footer-fade-1 { animation-delay: 0.05s; }
+.footer-fade-2 { animation-delay: 0.10s; }
+.footer-fade-3 { animation-delay: 0.15s; }
+.footer-fade-4 { animation-delay: 0.20s; }
+.footer-fade-5 { animation-delay: 0.25s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-fade {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* index.css ga qo'shing */
+@keyframes categoryFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.category-item {
+  animation: categoryFadeIn 0.3s ease-out backwards;
+}
+
+/* Har bir element uchun kechikish */
+.category-item:nth-child(1) { animation-delay: 0.02s; }
+.category-item:nth-child(2) { animation-delay: 0.04s; }
+.category-item:nth-child(3) { animation-delay: 0.06s; }
+.category-item:nth-child(4) { animation-delay: 0.08s; }
+.category-item:nth-child(5) { animation-delay: 0.10s; }
+.category-item:nth-child(6) { animation-delay: 0.12s; }
+.category-item:nth-child(7) { animation-delay: 0.14s; }
+.category-item:nth-child(8) { animation-delay: 0.16s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .category-item { animation: none; }
+}
+/* Hero fade-in animatsiyalari — CSS-based, framer-motion'siz */
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-fade {
+  opacity: 0;
+  animation: heroFadeUp 0.6s ease-out forwards;
+  will-change: opacity, transform;
+}
+
+.hero-fade-1 { animation-delay: 0.1s; }
+.hero-fade-2 { animation-delay: 0.2s; }
+.hero-fade-3 { animation-delay: 0.3s; }
+.hero-fade-4 { animation-delay: 0.4s; }
+
+/* Animatsiya tugagach will-change ni olib tashlash (performance) */
+.hero-fade {
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-fade {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

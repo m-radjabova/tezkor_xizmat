@@ -146,9 +146,11 @@ export default function AdminSidebar() {
         <HiBars3BottomLeft className="h-6 w-6" />
       </button>
 
-      <aside className="hidden h-screen w-[300px] shrink-0 border-r border-slate-100 bg-white lg:sticky lg:top-0 lg:block">
+      <aside className="fixed left-0 top-0 z-30 hidden h-screen w-[300px] border-r border-slate-100 bg-white lg:block">
         <SidebarContent />
       </aside>
+
+      <div className="hidden w-[300px] shrink-0 lg:block" aria-hidden="true" />
 
       <Drawer
         anchor="left"

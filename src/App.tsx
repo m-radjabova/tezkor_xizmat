@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import IsLoading from './components/isLoading'
 import AuthLayout from './layout/AuthLayout'
+import MainLayout from './layout/MainLayout'
 import ScrollToTop from './components/ScrollToTop'
 import NotFoundPage from './components/NotFoundPage'
 import Seo from './components/Seo'
@@ -22,11 +23,13 @@ const AdminProvidersPage = lazy(() => import('./pages/admin_pages/AdminProviders
 const AdminCustomersPage = lazy(() => import('./pages/admin_pages/AdminCustomers'))
 const LandingPage = lazy(() => import('./pages/LandingPage'))
 const BusinessDetailPage = lazy(() => import('./pages/BusinessDetailPage'))
+const BusinessesPage = lazy(() => import('./pages/BusinessesPage'))
 
 function getRouteTitle(pathname: string) {
   if (pathname === '/login') return 'Kirish'
   if (pathname === '/register') return "Ro'yxatdan o'tish"
   if (pathname.startsWith('/admin')) return 'Admin paneli'
+  if (pathname === '/businesses') return 'Barcha xizmatlar'
   if (pathname.startsWith('/provider')) return 'Provider kabineti'
   return undefined
 }
@@ -41,8 +44,11 @@ function App() {
    <ScrollToTop />
     <Suspense fallback={<IsLoading />}>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/businesses/:id" element={<BusinessDetailPage />} />
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/businesses" element={<BusinessesPage />} />
+          <Route path="/businesses/:id" element={<BusinessDetailPage />} />
+        </Route>
 
         <Route element={<AuthLayout />}>
           <Route path="/login" element={<LoginPage />} />

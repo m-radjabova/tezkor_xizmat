@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Bussiness from '../components/landing_page/Bussiness'
 import Categories from '../components/landing_page/Categories'
-import Footer from '../components/landing_page/Footer'
-import Header from '../components/landing_page/Header'
 import Hero from '../components/landing_page/Hero'
 import HowItWorks from '../components/landing_page/HowItWorks'
 import Testimonials from '../components/landing_page/Testimonials'
@@ -11,28 +10,24 @@ import { useBusinesses } from '../hooks/useBusinesses'
 import { useCategories } from '../hooks/useCategories'
 import { useDebounce } from '../hooks/useDebounce'
 
+const LANDING_BUSINESS_LIMIT = 8
+
 type LocationPoint = {
   latitude: number
   longitude: number
 }
 
 function LandingPage() {
+  const navigate = useNavigate()
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('')
   const [search, setSearch] = useState('')
   const [userLocation, setUserLocation] = useState<LocationPoint | null>(null)
-  const debouncedSearch = useDebounce(search, 350)
+  const debouncedSearch = useDebounce(search)
   const { categories, isLoadingCategories } = useCategories()
-  const {
-    businesses,
-    isLoadingBusinesses,
-    isLoadingMoreBusinesses,
-    hasMoreBusinesses,
-    loadMoreBusinesses,
-    refetchBusinesses,
-  } = useBusinesses({
+  const { businesses, isLoadingBusinesses, refetchBusinesses } = useBusinesses({
     categoryId: selectedCategoryId,
     search: debouncedSearch,
-    limit: 8,
+    limit: LANDING_BUSINESS_LIMIT,
     latitude: userLocation?.latitude,
     longitude: userLocation?.longitude,
     sortBy: userLocation ? 'distance' : 'newest',
@@ -68,7 +63,6 @@ function LandingPage() {
         description="O‘zingizga yaqin ishonchli xizmat ko‘rsatuvchilarni toping va ular bilan tez bog‘laning."
         canonicalPath="/"
       />
-      <Header />
       <Hero
         search={search}
         onSearchChange={setSearch}
@@ -84,12 +78,12 @@ function LandingPage() {
         isLoading={isLoadingCategories}
         onSelect={setSelectedCategoryId}
       />
+      {/* Faqat 6 ta xizmat ko'rsatiladi, "Boshqalarini ko'rish" tugmasi /businesses sahifasiga olib boradi */}
       <Bussiness
         businesses={businesses}
         isLoading={isLoadingBusinesses}
-        isLoadingMore={isLoadingMoreBusinesses}
-        hasMore={hasMoreBusinesses}
-        onLoadMore={() => void loadMoreBusinesses()}
+        hasMore={false}
+        onViewAll={() => navigate('/businesses')}
         title="Sizga eng yaqin xizmatlar"
         subtitle="Tanlangan kategoriya bo‘yicha joylashuvingizga eng yaqin xizmatlar"
         badge="Yaqin atrofda"
@@ -97,7 +91,6 @@ function LandingPage() {
       {/* <AppPromo /> */}
       <HowItWorks />
       <Testimonials />
-      <Footer />
     </main>
   )
 }

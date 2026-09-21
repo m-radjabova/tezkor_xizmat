@@ -4,7 +4,6 @@ import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined'
 import StarRoundedIcon from '@mui/icons-material/StarRounded'
 import StorefrontOutlinedIcon from '@mui/icons-material/StorefrontOutlined'
-import { motion, type Variants } from 'framer-motion'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { Business } from '../../types'
@@ -13,26 +12,14 @@ import { getBusinessStatus } from '../../utils/business'
 interface BussinessProps {
   businesses: Business[]
   isLoading: boolean
-  isLoadingMore: boolean
+  isLoadingMore?: boolean
   hasMore: boolean
-  onLoadMore: () => void
+  onLoadMore?: () => void
+  /** Berilsa, tugma bosilganda shu amal bajariladi (masalan /businesses sahifasiga o'tish) va doim ko'rinadi */
+  onViewAll?: () => void
   title?: string
   subtitle?: string
   badge?: string
-}
-
-const containerVariants: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-}
-
-const itemVariants: Variants = {
-  hidden: { opacity: 0, y: 18 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] },
-  },
 }
 
 function BusinessImage({ src, name }: { src?: string; name: string }) {
@@ -52,8 +39,9 @@ function BusinessImage({ src, name }: { src?: string; name: string }) {
       src={src}
       alt={name}
       loading="lazy"
+      decoding="async"
       onError={() => setFailedSrc(src)}
-      className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.035]"
+      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
     />
   )
 }
@@ -63,12 +51,13 @@ function BusinessLogo({ business }: { business: Business }) {
   const failed = Boolean(business.logo_url && failedSrc === business.logo_url)
 
   return (
-    <div className="grid h-[62px] w-[62px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/80 bg-white p-1.5 shadow-[0_8px_24px_rgba(0,0,0,0.18)] sm:h-[68px] sm:w-[68px]">
+    <div className="grid h-[62px] w-[62px] shrink-0 place-items-center overflow-hidden rounded-full border-2 border-white/80 bg-white p-1.5 shadow-md sm:h-[68px] sm:w-[68px]">
       {business.logo_url && !failed ? (
         <img
           src={business.logo_url}
           alt={`${business.name} logosi`}
           loading="lazy"
+          decoding="async"
           onError={() => setFailedSrc(business.logo_url)}
           className="h-full w-full rounded-full object-cover"
         />
@@ -79,12 +68,13 @@ function BusinessLogo({ business }: { business: Business }) {
   )
 }
 
-function BusinessCard({ business }: { business: Business }) {
+export function BusinessCard({ business }: { business: Business }) {
   const images = useMemo(() => {
     const gallery = (business.images || []).filter(Boolean)
     if (gallery.length) return gallery.slice(0, 5)
     return business.logo_url ? [business.logo_url] : []
   }, [business.images, business.logo_url])
+
   const [activeImage, setActiveImage] = useState(0)
   const ratingAverage = business.rating_average ?? business.reviewStats?.ratingAverage
   const ratingCount = business.rating_count ?? business.reviewStats?.ratingCount ?? 0
@@ -93,10 +83,7 @@ function BusinessCard({ business }: { business: Business }) {
   const safeActiveImage = activeImage < images.length ? activeImage : 0
 
   return (
-    <motion.article
-      variants={itemVariants}
-      className="group relative isolate min-h-[490px] overflow-hidden rounded-[18px] bg-[#07382d] shadow-[0_16px_34px_-18px_rgba(2,44,34,0.5)] ring-1 ring-black/5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_46px_-18px_rgba(2,44,34,0.58)] sm:min-h-[530px]"
-    >
+    <article className="business-card group relative isolate min-h-[490px] overflow-hidden rounded-[18px] bg-[#07382d] shadow-lg ring-1 ring-black/5 transition-shadow duration-200 hover:shadow-xl sm:min-h-[530px]">
       <BusinessImage src={images[safeActiveImage]} name={business.name} />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,12,15,0.05)_18%,rgba(3,20,19,0.26)_43%,rgba(2,31,25,0.88)_70%,rgba(2,48,37,0.98)_100%)]" />
       <div className="absolute inset-x-0 bottom-0 h-48 bg-[radial-gradient(circle_at_80%_100%,rgba(0,119,83,0.42),transparent_62%)]" />
@@ -110,12 +97,12 @@ function BusinessCard({ business }: { business: Business }) {
       <div className="pointer-events-none relative z-20 flex min-h-[490px] flex-col p-4 sm:min-h-[530px] sm:p-5">
         <div className="flex min-h-10 items-start justify-between gap-3">
           {business.is_verified ? (
-            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-bold text-[#08785d] shadow-[0_5px_16px_rgba(0,0,0,0.14)] sm:text-sm">
+            <span className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[13px] font-bold text-[#08785d] shadow-md sm:text-sm">
               <CheckCircleIcon sx={{ fontSize: 19 }} />
               Tasdiqlangan
             </span>
           ) : (
-            <span className="inline-flex items-center rounded-full bg-black/35 px-3.5 py-2 text-[13px] font-bold text-white backdrop-blur-md">
+            <span className="inline-flex items-center rounded-full bg-black/40 px-3.5 py-2 text-[13px] font-bold text-white">
               Tekshiruvda
             </span>
           )}
@@ -123,7 +110,10 @@ function BusinessCard({ business }: { business: Business }) {
 
         <div className="mt-auto">
           {images.length > 0 && (
-            <div className="pointer-events-auto relative z-30 mb-4 flex min-h-3 items-center gap-1.5" aria-label="Xizmat rasmlari">
+            <div
+              className="pointer-events-auto relative z-30 mb-4 flex min-h-3 items-center gap-1.5"
+              aria-label="Xizmat rasmlari"
+            >
               {images.map((image, index) => (
                 <button
                   key={`${image}-${index}`}
@@ -131,7 +121,7 @@ function BusinessCard({ business }: { business: Business }) {
                   onClick={() => setActiveImage(index)}
                   aria-label={`${index + 1}-rasmni ko'rish`}
                   aria-current={safeActiveImage === index}
-                  className={`h-2.5 w-2.5 rounded-full border border-white/35 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+                  className={`h-2.5 w-2.5 rounded-full border border-white/35 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
                     safeActiveImage === index ? 'bg-white' : 'bg-white/45 hover:bg-white/75'
                   }`}
                 />
@@ -169,13 +159,15 @@ function BusinessCard({ business }: { business: Business }) {
           <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-white">
             <ScheduleOutlinedIcon className="shrink-0" sx={{ fontSize: 20 }} />
             <span
-              className={`rounded-full px-3 py-1 text-xs font-extrabold shadow-inner ${
-                isOpen ? 'bg-[#07855c] text-white' : 'bg-white/18 text-white'
+              className={`rounded-full px-3 py-1 text-xs font-extrabold ${
+                isOpen ? 'bg-[#07855c] text-white' : 'bg-white/20 text-white'
               }`}
             >
               {isOpen ? 'Ochiq' : 'Yopiq'}
             </span>
-            <span className="text-xs font-medium text-white/95 sm:text-[13px]">{status.timeLabel}</span>
+            <span className="text-xs font-medium text-white/95 sm:text-[13px]">
+              {status.timeLabel}
+            </span>
             {business.working_days && (
               <span className="ml-auto max-w-full truncate text-xs font-medium text-white/90 sm:text-[13px]">
                 {business.working_days}
@@ -183,7 +175,7 @@ function BusinessCard({ business }: { business: Business }) {
             )}
           </div>
 
-          <p className="mt-3 line-clamp-2 min-h-[40px] text-[13px] font-medium leading-[1.5] text-white/92 sm:text-sm">
+          <p className="mt-3 line-clamp-2 min-h-[40px] text-[13px] font-medium leading-[1.5] text-white/90 sm:text-sm">
             {business.description || "Xizmat haqida batafsil ma'lumotni ko'rish uchun kartani bosing."}
           </p>
 
@@ -192,27 +184,29 @@ function BusinessCard({ business }: { business: Business }) {
             <Link
               to={`/businesses/${business.id}`}
               aria-label={`${business.name} sahifasiga o'tish`}
-              className="pointer-events-auto relative z-30 grid h-12 w-[64px] place-items-center rounded-[16px] bg-[#e9faf4] text-[#08785d] shadow-[0_8px_20px_rgba(0,0,0,0.15)] outline-none transition duration-200 hover:bg-white hover:text-[#055f49] focus-visible:ring-4 focus-visible:ring-emerald-300 sm:h-14 sm:w-[68px]"
+              className="pointer-events-auto relative z-30 grid h-12 w-[64px] place-items-center rounded-[16px] bg-[#e9faf4] text-[#08785d] shadow-md outline-none transition-colors duration-150 hover:bg-white hover:text-[#055f49] focus-visible:ring-4 focus-visible:ring-emerald-300 sm:h-14 sm:w-[68px]"
             >
-              <ArrowForwardIcon className="transition-transform duration-200 group-hover:translate-x-1" sx={{ fontSize: 26 }} />
+              <ArrowForwardIcon
+                className="transition-transform duration-150 group-hover:translate-x-0.5"
+                sx={{ fontSize: 26 }}
+              />
             </Link>
           </div>
         </div>
       </div>
-    </motion.article>
+    </article>
   )
 }
 
-function BusinessSkeleton() {
+export function BusinessSkeleton() {
   return (
-    <div className="relative min-h-[490px] overflow-hidden rounded-[18px] bg-slate-200 sm:min-h-[530px]">
-      <div className="absolute inset-0 animate-pulse bg-gradient-to-b from-slate-200 via-slate-300 to-slate-800" />
+    <div className="relative min-h-[490px] overflow-hidden rounded-[18px] bg-slate-300 sm:min-h-[530px]">
       <div className="absolute inset-x-4 bottom-4 space-y-3 sm:inset-x-5 sm:bottom-5">
         <div className="h-3 w-16 rounded-full bg-white/50" />
         <div className="h-7 w-3/5 rounded bg-white/65" />
         <div className="h-4 w-2/5 rounded bg-white/45" />
         <div className="h-4 w-4/5 rounded bg-white/45" />
-          <div className="h-10 w-full rounded bg-white/25" />
+        <div className="h-10 w-full rounded bg-white/25" />
         <div className="flex items-end justify-between">
           <div className="h-[62px] w-[62px] rounded-full bg-white/70" />
           <div className="h-12 w-16 rounded-[16px] bg-white/70" />
@@ -228,6 +222,7 @@ function Bussiness({
   isLoadingMore,
   hasMore,
   onLoadMore,
+  onViewAll,
   title = 'Sizga eng yaqin xizmatlar',
   subtitle = "Shahringizdagi sifatli va ishonchli xizmatlarni toping.",
   badge = 'Sizga yaqin xizmatlar',
@@ -235,13 +230,8 @@ function Bussiness({
   return (
     <section id="xizmatlar" className="scroll-mt-20 bg-white py-12 sm:py-16 lg:py-20">
       <div className="mx-auto max-w-[1380px] px-5 sm:px-8 lg:px-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-50px' }}
-          transition={{ duration: 0.45 }}
-          className="mb-9 flex flex-col items-start justify-between gap-6 sm:mb-10 md:flex-row md:items-end"
-        >
+        {/* Header */}
+        <div className="business-header mb-9 flex flex-col items-start justify-between gap-6 sm:mb-10 md:flex-row md:items-end">
           <div className="min-w-0">
             <div className="mb-3 flex items-center gap-4 text-[#08785d]">
               <span className="h-[3px] w-10 rounded-full bg-[#0a8a65]" />
@@ -255,54 +245,59 @@ function Bussiness({
             </p>
           </div>
 
-          {hasMore && (
+          {(hasMore || onViewAll) && (
             <button
               type="button"
-              onClick={onLoadMore}
-              disabled={isLoadingMore}
-              className="group inline-flex h-[54px] shrink-0 items-center gap-4 rounded-[22px] bg-[#eef7f4] px-6 text-[15px] font-semibold text-[#123f34] outline-none transition hover:bg-[#dff2ec] focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-wait disabled:opacity-60"
+              onClick={onViewAll ?? onLoadMore}
+              disabled={!onViewAll && isLoadingMore}
+              className="group inline-flex h-[54px] shrink-0 items-center gap-4 rounded-[22px] bg-[#eef7f4] px-6 text-[15px] font-semibold text-[#123f34] outline-none transition-colors duration-200 hover:bg-[#dff2ec] focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:cursor-wait disabled:opacity-60"
             >
-              {isLoadingMore ? 'Yuklanmoqda...' : "Barchasini ko'rish"}
-              <ArrowForwardIcon className="transition-transform group-hover:translate-x-1" sx={{ fontSize: 24 }} />
+              {!onViewAll && isLoadingMore ? 'Yuklanmoqda...' : "Boshqalarini ko'rish"}
+              <ArrowForwardIcon
+                className="transition-transform duration-200 group-hover:translate-x-1"
+                sx={{ fontSize: 24 }}
+              />
             </button>
           )}
-        </motion.div>
+        </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial={false}
-          animate="visible"
-          className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
-        >
+        {/* Grid */}
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {isLoading
-            ? Array.from({ length: 6 }).map((_, index) => <BusinessSkeleton key={index} />)
-            : businesses.map((business) => (
+            ? Array.from({ length: 8 }).map((_, index) => (
+                <BusinessSkeleton key={index} />
+              ))
+            : businesses.map((business )  => (
                 <BusinessCard key={business.id} business={business} />
               ))}
-        </motion.div>
+        </div>
 
+        {/* Empty state */}
         {!isLoading && businesses.length === 0 && (
           <div className="rounded-[20px] border border-dashed border-slate-300 bg-slate-50 px-6 py-16 text-center">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#e4f4ef] text-[#08785d]">
               <LocationOnOutlinedIcon sx={{ fontSize: 34 }} />
             </div>
-            <p className="mt-5 text-xl font-extrabold text-slate-900">Hozircha xizmat topilmadi</p>
+            <p className="mt-5 text-xl font-extrabold text-slate-900">
+              Hozircha xizmat topilmadi
+            </p>
             <p className="mx-auto mt-2 max-w-md text-sm font-medium leading-6 text-slate-500">
               Qidiruv so'zini o'zgartiring yoki boshqa kategoriyani tanlang.
             </p>
           </div>
         )}
 
-        {!isLoading && hasMore && (
+        {/* Mobile load more */}
+        {!isLoading && (hasMore || onViewAll) && (
           <div className="mt-10 flex justify-center md:hidden">
             <button
               type="button"
-              onClick={onLoadMore}
-              disabled={isLoadingMore}
-              className="inline-flex h-13 items-center gap-3 rounded-[20px] bg-[#08785d] px-7 text-sm font-bold text-white shadow-lg shadow-emerald-900/15 outline-none focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:opacity-60"
+              onClick={onViewAll ?? onLoadMore}
+              disabled={!onViewAll && isLoadingMore}
+              className="inline-flex h-13 items-center gap-3 rounded-[20px] bg-[#08785d] px-7 text-sm font-bold text-white shadow-md outline-none transition-colors duration-200 focus-visible:ring-4 focus-visible:ring-emerald-200 disabled:opacity-60"
             >
-              {isLoadingMore ? 'Yuklanmoqda...' : "Yana ko'rsatish"}
-              {!isLoadingMore && <ArrowForwardIcon sx={{ fontSize: 21 }} />}
+              {!onViewAll && isLoadingMore ? 'Yuklanmoqda...' : "Boshqalarini ko'rish"}
+              {(!isLoadingMore || onViewAll) && <ArrowForwardIcon sx={{ fontSize: 21 }} />}
             </button>
           </div>
         )}

@@ -9,7 +9,6 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
 import CloseIcon from '@mui/icons-material/Close'
 import DirectionsCarIcon from '@mui/icons-material/DirectionsCar'
-import DirectionsIcon from '@mui/icons-material/Directions'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import HomeIcon from '@mui/icons-material/Home'
 import LocationOnIcon from '@mui/icons-material/LocationOn'
@@ -23,6 +22,7 @@ import StarIcon from '@mui/icons-material/Star'
 import StorefrontIcon from '@mui/icons-material/Storefront'
 import TripOriginIcon from '@mui/icons-material/TripOrigin'
 import {
+  type FormEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -31,17 +31,19 @@ import {
   type ReactNode,
   type TouchEvent as ReactTouchEvent,
 } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import Footer from '../components/landing_page/Footer'
-import Header from '../components/landing_page/Header'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import IsLoading from '../components/isLoading'
 import Skeleton, { SkeletonText } from '../components/Skeleton'
 import { useBusiness } from '../hooks/useBusiness'
 import { useBusinessReviews } from '../hooks/useBusinessReviews'
 import { useBusinesses } from '../hooks/useBusinesses'
+import useContextPro from '../hooks/useContextPro'
 import type { Business } from '../types'
 import { getBusinessStatus, getReviewStats } from '../utils/business'
+import { getErrorMessage } from '../utils/error'
+import { showErrorToast, showSuccessToast } from '../utils/toast'
 import { WorkOutlined } from '@mui/icons-material'
+import InteractiveRouteMap from '../components/InteractiveRouteMap'
 
 type Coords = { lat: number; lng: number }
 
@@ -440,7 +442,7 @@ function Gallery({ images, name, isVerified }: { images: string[]; name: string;
 /*  Direction modal                                                           */
 /* -------------------------------------------------------------------------- */
 
-function DirectionModal({ business, coords, directionsUrl, onClose }: { business: Business; coords: Coords | null; directionsUrl: string; onClose: () => void }) {
+function DirectionModal({ business, coords, onClose }: { business: Business; coords: Coords | null; onClose: () => void }) {
   const closeRef = useDialog(onClose)
 
   return (
@@ -449,10 +451,12 @@ function DirectionModal({ business, coords, directionsUrl, onClose }: { business
         role="dialog"
         aria-modal="true"
         aria-label={`${business.name} yo'nalishi`}
-        className="relative h-[min(720px,92vh)] w-full max-w-[540px] overflow-hidden rounded-[22px] bg-white shadow-2xl"
+        className="relative h-[min(760px,92vh)] w-full max-w-[980px] overflow-hidden rounded-[22px] bg-white shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <MapPreview coords={coords} title={`${business.name} xaritada`} span={0.008} className="h-full w-full" />
+        {coords ? <InteractiveRouteMap endCoords={coords} /> : (
+          <div className="grid h-full place-items-center px-6 text-center text-slate-500">Xizmat koordinatalari mavjud emas.</div>
+        )}
         <button
           ref={closeRef}
           type="button"
@@ -462,17 +466,9 @@ function DirectionModal({ business, coords, directionsUrl, onClose }: { business
         >
           <CloseIcon />
         </button>
-        <div className="absolute inset-x-3 bottom-3 rounded-[18px] bg-white p-5 shadow-2xl sm:inset-x-4 sm:bottom-4">
+        <div className="pointer-events-none absolute inset-x-3 bottom-3 rounded-[18px] bg-white/95 p-4 shadow-2xl backdrop-blur-sm sm:inset-x-4 sm:bottom-4">
           <p className="text-lg font-extrabold text-slate-950">{business.name}</p>
           <p className="mt-1 text-sm font-medium text-slate-500">{business.address}</p>
-          <a
-            href={directionsUrl}
-            target="_blank"
-            rel="noreferrer"
-            className={`mt-4 flex h-12 items-center justify-center gap-2 rounded-[14px] bg-emerald-700 text-sm font-bold text-white transition hover:bg-emerald-800 active:scale-[.99] ${FOCUS}`}
-          >
-            <DirectionsIcon /> Yo'nalishni boshlash
-          </a>
         </div>
       </div>
     </div>
@@ -536,19 +532,24 @@ function SimilarCard({ business }: { business: Business }) {
 
 function BusinessDetailPage() {
   const { id } = useParams()
+  const location = useLocation()
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useContextPro()
   const [directionOpen, setDirectionOpen] = useState(false)
   const [shareCopied, setShareCopied] = useState(false)
   const [scheduleOpen, setScheduleOpen] = useState(false)
   const [showAllReviews, setShowAllReviews] = useState(false)
   const [activeTab, setActiveTab] = useState('sharhlar')
   const [hideBar, setHideBar] = useState(false)
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewComment, setReviewComment] = useState('')
+  const [reviewSubmitted, setReviewSubmitted] = useState(false)
   
   const actionsRef = useRef<HTMLDivElement>(null)
   const footerRef = useRef<HTMLDivElement>(null)
   const shareTimer = useRef<number | undefined>(undefined)
 
   const { business, isLoadingBusiness, isErrorBusiness } = useBusiness(id)
-  const { reviews, isLoadingReviews } = useBusinessReviews(id)
+  const { reviews, isLoadingReviews, createReview, isCreatingReview } = useBusinessReviews(id)
   const stats = getReviewStats(reviews)
   const { businesses: similarBusinesses, isLoadingBusinesses } = useBusinesses({ categoryId: business?.category_id ?? '', limit: 5 })
 
@@ -572,6 +573,9 @@ function BusinessDetailPage() {
       setScheduleOpen(false)
       setShowAllReviews(false)
       setActiveTab('sharhlar')
+      setReviewRating(5)
+      setReviewComment('')
+      setReviewSubmitted(false)
     })
     return () => window.cancelAnimationFrame(frame)
   }, [id])
@@ -621,7 +625,6 @@ function BusinessDetailPage() {
   if (isErrorBusiness || !business) {
     return (
       <main className="min-h-screen bg-slate-50">
-        <Header />
         <div className="mx-auto max-w-2xl px-5 pb-20 pt-36 text-center">
           <span className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-emerald-50 text-emerald-700"><StorefrontIcon sx={{ fontSize: 40 }} /></span>
           <h1 className="mt-6 text-3xl font-black">Xizmat topilmadi</h1>
@@ -630,7 +633,6 @@ function BusinessDetailPage() {
             Bosh sahifaga qaytish
           </Link>
         </div>
-        <Footer />
       </main>
     )
   }
@@ -645,11 +647,6 @@ function BusinessDetailPage() {
   const ratingCount = stats.ratingCount > 0 ? stats.ratingCount : (business.reviewStats?.ratingCount ?? 0)
   const ratingLabel = typeof ratingAverage === 'number' ? ratingAverage.toFixed(1) : null
 
-  const directionsUrl = coords
-    ? `https://www.google.com/maps/dir/?api=1&destination=${coords.lat},${coords.lng}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(business.address || business.name)}`
-  const viewUrl = coords ? `https://www.google.com/maps/search/?api=1&query=${coords.lat},${coords.lng}` : directionsUrl
-
   const [city, ...restAddress] = business.address.split(',')
   const locationTitle = restAddress.length ? city.trim() : business.address
   const locationSubtitle = restAddress.length ? restAddress.join(',').trim() : null
@@ -657,6 +654,11 @@ function BusinessDetailPage() {
   const openDays = parseWorkingDays(business.working_days)
   const todayIndex = (new Date().getDay() + 6) % 7
   const visibleReviews = showAllReviews ? reviews : reviews.slice(0, 2)
+  const canWriteReview = isAuthenticated && user?.role === 'customer'
+  const reviewCommentLength = reviewComment.length
+  const currentUserReview = user
+    ? reviews.find((review) => review.user_id === user.id)
+    : undefined
 
   const tabs = [
     ...(images.length ? [{ id: 'rasmlar', label: 'Rasmlar' }] : []),
@@ -680,14 +682,39 @@ function BusinessDetailPage() {
     }
   }
 
+  const handleReviewSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!id || isCreatingReview) return
+
+    try {
+      await createReview({
+        rating: reviewRating,
+        comment: reviewComment.trim() || null,
+      })
+      setReviewRating(5)
+      setReviewComment('')
+      setReviewSubmitted(true)
+      showSuccessToast("Sharhingiz yuborildi. Tasdiqlangach sahifada ko'rinadi.")
+    } catch (error) {
+      const message = getErrorMessage(error, 'Sharh yuborishda xatolik yuz berdi')
+      if (message.toLowerCase().includes('already reviewed')) {
+        showErrorToast('Siz bu xizmatga allaqachon sharh qoldirgansiz.')
+        return
+      }
+      if (message.toLowerCase().includes('customer access')) {
+        showErrorToast('Sharh qoldirish uchun mijoz hisobi bilan kiring.')
+        return
+      }
+      showErrorToast(message)
+    }
+  }
+
   const primaryButton = `flex h-14 w-full items-center justify-center gap-2.5 rounded-[14px] bg-emerald-700 text-base font-bold text-white shadow-[0_10px_24px_rgba(4,120,87,0.22)] transition hover:bg-emerald-800 active:scale-[.99] ${FOCUS}`
   const secondaryButton = `flex h-14 w-full items-center justify-center gap-2.5 rounded-[14px] bg-[#edf3ef] text-base font-bold text-slate-900 transition hover:bg-[#e2ebe5] active:scale-[.99] ${FOCUS}`
   const outlineButton = `flex h-12 w-full items-center justify-center gap-2 rounded-[14px] border border-slate-200 bg-white text-sm font-semibold text-slate-800 transition hover:border-slate-300 hover:bg-slate-50 active:scale-[.99] ${FOCUS}`
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.06),transparent_28%),#f7faf8] text-[#071126]">
-      <Header />
-
       <div className="mx-auto max-w-[1440px] px-4 pb-20 pt-6 sm:px-6 lg:px-10 lg:pt-7">
         <nav aria-label="Sahifa yo'li" className="mb-5">
           <ol className="flex flex-wrap items-center gap-1.5 text-[13px] font-medium text-slate-500">
@@ -857,14 +884,12 @@ function BusinessDetailPage() {
                   </div>
 
                   <MapPreview coords={coords} title={`${business.name} xaritada`} span={0.01} className="mt-3 h-[228px] rounded-2xl">
-                    <a
-                      href={viewUrl}
-                      target="_blank"
-                      rel="noreferrer"
+                    <button
+                      onClick={() => setDirectionOpen(true)}
                       className={`absolute bottom-3 right-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-[13px] font-semibold text-slate-900 shadow-[0_6px_18px_rgba(15,23,42,0.16)] transition hover:bg-slate-50 ${FOCUS}`}
                     >
                       <MapOutlinedIcon sx={{ fontSize: 18 }} /> Xaritada ko'rish
-                    </a>
+                    </button>
                   </MapPreview>
                 </div>
               </div>
@@ -885,29 +910,130 @@ function BusinessDetailPage() {
             }
           />
           <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(320px,1fr)_minmax(0,1.6fr)]">
-            <div className={`rounded-[18px] border border-slate-100 bg-white p-6 ${CARD_SHADOW}`}>
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-                <div className="shrink-0">
-                  {typeof ratingAverage === 'number' && (
-                    <>
-                      <p className="text-[52px] font-black leading-none tracking-tight">{ratingAverage.toFixed(1)}</p>
-                      <div className="mt-3"><Stars value={ratingAverage} size={22} /></div>
-                      <p className="mt-2 text-sm font-medium text-slate-500">{ratingCount} ta baho</p>
-                    </>
-                  )}
-                </div>
-                <div className="w-full flex-1 space-y-2.5">
-                  {stats.distribution.map((item) => (
-                    <div key={item.rating} className="flex items-center gap-2 text-xs font-medium text-slate-700">
-                      <span className="w-2 text-right tabular-nums">{item.rating}</span>
-                      <StarIcon className="text-amber-400" sx={{ fontSize: 15 }} />
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100" role="presentation">
-                        <div className="h-full rounded-full bg-emerald-600 transition-[width] duration-500 motion-reduce:transition-none" style={{ width: `${item.percent}%` }} />
+            <div className="space-y-4">
+              <div className={`rounded-[18px] border border-slate-100 bg-white p-6 ${CARD_SHADOW}`}>
+                <div className="flex flex-col gap-6 sm:flex-row sm:items-center lg:flex-col lg:items-start 2xl:flex-row 2xl:items-center">
+                  <div className="shrink-0">
+                    {typeof ratingAverage === 'number' ? (
+                      <>
+                        <p className="text-[52px] font-black leading-none tracking-tight">{ratingAverage.toFixed(1)}</p>
+                        <div className="mt-3"><Stars value={ratingAverage} size={22} /></div>
+                        <p className="mt-2 text-sm font-medium text-slate-500">{ratingCount} ta baho</p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[42px] font-black leading-none tracking-tight">0.0</p>
+                        <div className="mt-3"><Stars value={0} size={22} /></div>
+                        <p className="mt-2 text-sm font-medium text-slate-500">Hali baho yo'q</p>
+                      </>
+                    )}
+                  </div>
+                  <div className="w-full flex-1 space-y-2.5">
+                    {stats.distribution.map((item) => (
+                      <div key={item.rating} className="flex items-center gap-2 text-xs font-medium text-slate-700">
+                        <span className="w-2 text-right tabular-nums">{item.rating}</span>
+                        <StarIcon className="text-amber-400" sx={{ fontSize: 15 }} />
+                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-slate-100" role="presentation">
+                          <div className="h-full rounded-full bg-emerald-600 transition-[width] duration-500 motion-reduce:transition-none" style={{ width: `${item.percent}%` }} />
+                        </div>
+                        <span className="w-9 text-right tabular-nums text-slate-500">{item.percent}%</span>
                       </div>
-                      <span className="w-9 text-right tabular-nums text-slate-500">{item.percent}%</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
+              </div>
+
+              <div className={`rounded-[18px] border border-slate-100 bg-white p-5 ${CARD_SHADOW}`}>
+                <h3 className="text-lg font-extrabold text-slate-950">Sharh qoldiring</h3>
+                <p className="mt-1 text-sm font-medium leading-6 text-slate-500">
+                  Sizning fikringiz boshqa mijozlarga xizmat sifati va tezligini baholashda yordam beradi.
+                </p>
+
+                {reviewSubmitted && (
+                  <div className="mt-4 rounded-[14px] border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-800">
+                    Sharhingiz qabul qilindi va tasdiqlashga yuborildi.
+                  </div>
+                )}
+
+                {isAuthLoading ? (
+                  <div className="mt-4 space-y-3">
+                    <SkeletonText className="w-40" />
+                    <Skeleton className="h-24 rounded-[14px]" />
+                  </div>
+                ) : !isAuthenticated ? (
+                  <div className="mt-4 rounded-[14px] bg-slate-50 p-4">
+                    <p className="text-sm font-semibold leading-6 text-slate-600">
+                      Sharh qoldirish uchun mijoz hisobi bilan tizimga kiring.
+                    </p>
+                    <Link
+                      to="/login"
+                      state={{ from: location.pathname }}
+                      className={`mt-3 inline-flex h-11 items-center justify-center rounded-[12px] bg-emerald-700 px-5 text-sm font-bold text-white transition hover:bg-emerald-800 ${FOCUS}`}
+                    >
+                      Kirish
+                    </Link>
+                  </div>
+                ) : user?.role !== 'customer' ? (
+                  <div className="mt-4 rounded-[14px] bg-amber-50 px-4 py-3 text-sm font-semibold leading-6 text-amber-800">
+                    Sharhni faqat mijoz hisobi orqali qoldirish mumkin.
+                  </div>
+                ) : currentUserReview ? (
+                  <div className="mt-4 rounded-[14px] bg-slate-50 p-4">
+                    <p className="text-sm font-bold text-slate-900">Siz bu xizmatga sharh qoldirgansiz.</p>
+                    <div className="mt-2"><Stars value={currentUserReview.rating} size={18} /></div>
+                    {currentUserReview.comment && (
+                      <p className="mt-2 text-sm font-medium leading-6 text-slate-600">{currentUserReview.comment}</p>
+                    )}
+                  </div>
+                ) : (
+                  <form onSubmit={(event) => void handleReviewSubmit(event)} className="mt-4 space-y-4">
+                    <fieldset disabled={!canWriteReview || isCreatingReview} className="space-y-2">
+                      <legend className="text-sm font-bold text-slate-800">Baholang</legend>
+                      <div className="flex gap-1.5" role="radiogroup" aria-label="Reyting">
+                        {[1, 2, 3, 4, 5].map((rating) => {
+                          const active = rating <= reviewRating
+                          return (
+                            <button
+                              key={rating}
+                              type="button"
+                              onClick={() => setReviewRating(rating)}
+                              className={`grid h-10 w-10 place-items-center rounded-[10px] transition ${FOCUS} ${
+                                active ? 'bg-amber-50 text-amber-400' : 'bg-slate-50 text-slate-300 hover:text-amber-300'
+                              }`}
+                              aria-label={`${rating} baho`}
+                              aria-pressed={reviewRating === rating}
+                            >
+                              {active ? <StarIcon sx={{ fontSize: 24 }} /> : <StarBorderIcon sx={{ fontSize: 24 }} />}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </fieldset>
+
+                    <label className="block">
+                      <span className="text-sm font-bold text-slate-800">Izoh</span>
+                      <textarea
+                        value={reviewComment}
+                        onChange={(event) => setReviewComment(event.target.value.slice(0, 2000))}
+                        rows={4}
+                        placeholder="Xizmat sifati, tezligi yoki umumiy taassurotingiz..."
+                        className={`mt-2 w-full resize-none rounded-[14px] border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium leading-6 text-slate-800 outline-none transition focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 ${FOCUS}`}
+                        disabled={isCreatingReview}
+                      />
+                      <span className="mt-1 block text-right text-xs font-semibold text-slate-400">
+                        {reviewCommentLength}/2000
+                      </span>
+                    </label>
+
+                    <button
+                      type="submit"
+                      disabled={isCreatingReview}
+                      className={`h-12 w-full rounded-[14px] bg-emerald-700 px-5 text-sm font-bold text-white shadow-[0_10px_24px_rgba(4,120,87,0.18)] transition hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60 ${FOCUS}`}
+                    >
+                      {isCreatingReview ? 'Yuborilmoqda...' : 'Sharh yuborish'}
+                    </button>
+                  </form>
+                )}
               </div>
             </div>
 
@@ -957,14 +1083,13 @@ function BusinessDetailPage() {
                   {coords && <p className="text-sm font-medium tabular-nums text-slate-500">({coords.lat.toFixed(4)}, {coords.lng.toFixed(4)})</p>}
                 </div>
               </div>
-              <a
-                href={viewUrl}
-                target="_blank"
-                rel="noreferrer"
+              <button
+                type="button"
+                onClick={() => setDirectionOpen(true)}
                 className={`flex h-12 items-center justify-center gap-2 rounded-[12px] bg-white text-sm font-bold text-emerald-800 shadow-sm transition hover:bg-emerald-50 active:scale-[.99] ${FOCUS}`}
               >
-                Xaritada ochish <ArrowForwardIcon sx={{ fontSize: 18 }} />
-              </a>
+                Yo'nalishni ko'rish <ArrowForwardIcon sx={{ fontSize: 18 }} />
+              </button>
             </div>
           </div>
         </section>
@@ -999,8 +1124,9 @@ function BusinessDetailPage() {
         </button>
       </div>
 
-      {directionOpen && <DirectionModal business={business} coords={coords} directionsUrl={directionsUrl} onClose={() => setDirectionOpen(false)} />}
-      <div ref={footerRef}><Footer /></div>
+      {directionOpen && <DirectionModal business={business} coords={coords} onClose={() => setDirectionOpen(false)} />}
+
+      <div ref={footerRef} className="h-px" aria-hidden="true" />
     </main>
   )
 }
