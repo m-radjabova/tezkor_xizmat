@@ -8,6 +8,13 @@ body,
   overflow-x: hidden;
 }
 
+.telegram-webapp,
+.telegram-webapp body,
+.telegram-webapp #root {
+  min-height: 100vh;
+  min-height: var(--tg-viewport-stable-height, 100dvh);
+}
+
 button, link{
   cursor: pointer;
 }

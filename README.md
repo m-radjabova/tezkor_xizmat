@@ -14,6 +14,7 @@ Tezkor Xizmat - foydalanuvchilarga yaqin atrofdagi ishonchli xizmat ko'rsatuvchi
 - Login, ro'yxatdan o'tish va Google orqali kirish
 - SEO uchun tayyor meta teglar va social preview rasmi
 - Responsive dizayn: desktop, planshet va mobil ekranlarga mos
+- Telegram Mini App ichida ochilish, Telegram viewport va native back tugmasi
 
 ## Texnologiyalar
 
@@ -28,6 +29,18 @@ Tezkor Xizmat - foydalanuvchilarga yaqin atrofdagi ishonchli xizmat ko'rsatuvchi
 - Firebase Auth
 - Axios
 - Framer Motion
+- Telegram Web Apps JavaScript API
+
+## Telegram Mini App
+
+Sayt Telegram botning Web App tugmalari orqali ochilganda Telegram Web Apps
+SDK'sini ishga tushiradi, oynani kengaytiradi va Telegram'ning native back
+tugmasini React Router navigatsiyasiga bog'laydi. Oddiy brauzerda Telegram SDK
+mavjud bo'lmasa, sayt avvalgidek ishlaydi.
+
+Telegram `initData` backend tomonidan tekshirilmaguncha foydalanuvchini
+autentifikatsiya qilish uchun ishlatilmaydi. Telegram loginini yoqish uchun
+backendda alohida, imzoni server tomonida tekshiradigan auth oqimi kerak.
 
 ## Ishga Tushirish
 

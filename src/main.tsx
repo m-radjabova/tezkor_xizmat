@@ -7,6 +7,7 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import App from './App'
 import CreateContextPro from './hooks/CreateContextPro'
+import TelegramWebAppBridge from './components/TelegramWebAppBridge'
 import './index.css'
 
 const queryClient = new QueryClient({
@@ -23,6 +24,7 @@ createRoot(document.getElementById('root')!).render(
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <TelegramWebAppBridge />
           <CreateContextPro>
             <App />
             <ToastContainer position="top-right" autoClose={2800} newestOnTop closeButton={false} />
